@@ -2,45 +2,69 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viernes - Asistente Virtual</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Viernes - Sistema Operativo</title>
     <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
         body {
-            background-color: #0b0f19;
+            background-color: #050811;
             color: #00ffcc;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
+            overflow: hidden;
+            padding: 20px;
         }
-        .nucleo {
-            width: 150px;
-            height: 150px;
-            border: 5px solid #00ffcc;
-            border-radius: 50%;
-            box-shadow: 0 0 20px #00ffcc, inset 0 0 20px #00ffcc;
+        .contenedor-nucleo {
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
+            margin-bottom: 40px;
+        }
+        .nucleo {
+            width: 160px;
+            height: 160px;
+            border: 4px solid #00ffcc;
+            border-radius: 50%;
+            box-shadow: 0 0 25px #00ffcc, inset 0 0 15px #00ffcc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            background: radial-gradient(circle, rgba(0,255,204,0.1) 0%, rgba(0,0,0,0) 70%);
+            user-select: none;
+        }
+        .nucleo:active {
+            transform: scale(0.95);
         }
         .estado {
-            font-size: 1.2rem;
-            text-shadow: 0 0 10px #00ffcc;
+            font-size: 1.1rem;
+            text-align: center;
+            max-width: 80%;
+            line-height: 1.5;
+            text-shadow: 0 0 8px rgba(0, 255, 204, 0.5);
+            min-height: 50px;
         }
     </style>
 </head>
 <body>
 
-    <div class="nucleo" id="boton-activar">
-        <span>Lu / Il</span>
+    <div class="contenedor-nucleo">
+        <div class="nucleo" id="boton-activar">VIERNES</div>
     </div>
 
-    <div class="estado" id="texto-estado">Presiona el núcleo para iniciar</div>
+    <div class="estado" id="texto-estado">Sistema en espera. Toque el núcleo para iniciar protocolo.</div>
 
     <script src="app.js"></script>
 </body>
