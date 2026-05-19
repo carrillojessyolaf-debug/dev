@@ -3,96 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Viernes - Sistema Operativo</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-        body {
-            background-color: #050811;
-            color: #00ffcc;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            padding: 20px;
-        }
-        .contenedor-nucleo {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 40px;
-        }
-        .nucleo {
-            width: 160px;
-            height: 160px;
-            border: 4px solid #00ffcc;
-            border-radius: 50%;
-            box-shadow: 0 0 25px #00ffcc, inset 0 0 15px #00ffcc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-weight: bold;
-            letter-spacing: 2px;
-            transition: all 0.3s ease;
-            background: radial-gradient(circle, rgba(0,255,204,0.1) 0%, rgba(0,0,0,0) 70%);
-            user-select: none;
-        }
-        .nucleo:active {
-            transform: scale(0.95);
-        }
-        .btn-multimodal {
-            margin-top: 20px;
-            background-color: transparent;
-            border: 2px solid #00ffcc;
-            color: #00ffcc;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s;
-        }
-        .btn-multimodal:hover {
-            background-color: rgba(0, 255, 204, 0.2);
-            box-shadow: 0 0 10px #00ffcc;
-        }
-        .estado {
-            font-size: 1.1rem;
-            text-align: center;
-            max-width: 80%;
-            line-height: 1.5;
-            text-shadow: 0 0 8px rgba(0, 255, 204, 0.5);
-            min-height: 50px;
-        }
-        #vista-previa-img {
-            max-width: 100px;
-            max-height: 100px;
-            margin-top: 15px;
-            border-radius: 8px;
-            display: none;
-            border: 1px solid #00ffcc;
-        }
-    </style>
+    <title>Viernes - OS UI</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="contenedor-nucleo">
-        <div class="nucleo" id="boton-activar">VIERNES</div>
+    <div class="contenedor-raiz-horizontal">
         
-        <button class="btn-multimodal" onclick="document.getElementById('input-archivo').click()">📷 Analizar Imagen</button>
-        <input type="file" id="input-archivo" accept="image/*" style="display: none;">
-        <img id="vista-previa-img" alt="Miniatura">
+        <div class="barra-lateral">
+            <button class="btn-holograma" title="Documento">📄<br>DOC</button>
+            <button class="btn-holograma" id="btn-camara" onclick="document.getElementById('input-archivo').click()" title="Cámara">📷<br>CAM</button>
+            <button class="btn-holograma" onclick="document.getElementById('input-archivo').click()" title="Galería">🖼️<br>GAL</button>
+            <input type="file" id="input-archivo" accept="image/*" style="display: none;">
+        </div>
+
+        <div class="panel-centro">
+            <div class="cara-robot" id="boton-activar">
+                <div class="ojo"></div>
+                <div class="ojo"></div>
+            </div>
+
+            <div class="contenedor-ondas">
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+            </div>
+            
+            <img id="vista-previa-img" style="max-width: 60px; max-height: 60px; margin-top: 15px; border-radius: 5px; display: none; border: 1px solid #00ffcc;">
+        </div>
+
+        <div class="barra-lateral">
+            <button class="btn-holograma" title="Mood Relajado">😊<br>MOOD</button>
+            <button class="btn-holograma" title="Mood Inteligente">🧠<br>INT</button>
+            <button class="btn-holograma" title="Video">📹<br>VID</button>
+            <button class="btn-holograma" title="Teléfono">📞<br>TEL</button>
+            <button class="btn-holograma" title="Transmisión en Vivo">
+                LIVE <span class="live-dot"></span>
+            </button>
+        </div>
+
     </div>
 
-    <div class="estado" id="texto-estado">Sistema en espera. Toque el núcleo para hablar o cargue una imagen.</div>
+    <div class="panel-subtitulos">
+        <div class="linea-subtitulo" id="subtitulo-1">[Viernes]: Iniciando sistemas. Bienvenido.</div>
+        <div class="linea-subtitulo" id="subtitulo-2" style="color: #00ffcc;">[Viernes]: Esperando instrucciones.</div>
+    </div>
 
     <script src="app.js"></script>
 </body>
