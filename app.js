@@ -4,7 +4,14 @@ const textoEstado = document.getElementById('texto-estado');
 const inputArchivo = document.getElementById('input-archivo');
 const vistaPreviaImg = document.getElementById('vista-previa-img');
 
-let imagenCargadaBase64 = null;
+// ESTRUCTURA DE ALMACENAMIENTO MULTIMODAL (PUNTO 10)
+let payloadMultimodal = {
+    tipo: null,
+    nombreArchivo: null,
+    tamano: null,
+    fechaCaptura: null,
+    datosBase64: null
+};
 
 // VARIABLES DE CONTROL DE VOZ Y BIOMETRÍA ACÚSTICA
 let audioContext = null;
@@ -78,6 +85,36 @@ function activarAnalisisBiometrico() {
     }).catch(() => {});
 }
 
+// RECEPTOR Y PROCESADOR MULTIMODAL ESTRUCTURADO (PUNTO 10)
+if (inputArchivo) {
+    inputArchivo.addEventListener('change', (e) => {
+        const archivo = e.target.files[0];
+        if (archivo) {
+            textoEstado.innerText = "Estructurando archivo multimedia...";
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                // Rellenar la estructura formal para el procesamiento del futuro
+                payloadMultimodal.tipo = archivo.type;
+                payloadMultimodal.nombreArchivo = archivo.name;
+                payloadMultimodal.tamano = `${(archivo.size / 1024).toFixed(2)} KB`;
+                payloadMultimodal.fechaCaptura = new Date().toLocaleString('es-MX');
+                payloadMultimodal.datosBase64 = event.target.result;
+                
+                // Mostrar miniatura en interfaz
+                vistaPreviaImg.src = payloadMultimodal.datosBase64;
+                vistaPreviaImg.style.display = "block";
+                
+                textoEstado.innerText = "Estructura lista. Archivo indexado correctamente.";
+                
+                // Responder confirmando la metadata del archivo cargado
+                responderConVoz(`Jefe Omar, he recibido y estructurado el archivo: ${payloadMultimodal.nombreArchivo}. El payload de ${payloadMultimodal.tamano} está listo en memoria para su procesamiento analítico futuro.`);
+            };
+            reader.readAsDataURL(archivo);
+        }
+    });
+}
+
 // PROTOCOLO COGNITIVO PRINCIPAL
 function procesarVozYOrden(mensaje) {
     let vozJefe = localStorage.getItem('biometria_jefe');
@@ -89,4 +126,24 @@ function procesarVozYOrden(mensaje) {
             responderConVoz(`Frecuencia acústica guardada. Identidad del Jefe Omar vinculada al sistema correctamente.`);
         } else {
             listaVocesInvitados[nombreVozARegistrar] = frecuenciaMediaDetectada;
-            localStorage.setItem('voces_invitados', JSON.stringify(listaVocesInvitados
+            localStorage.setItem('voces_invitados', JSON.stringify(listaVocesInvitados));
+            responderConVoz(`Entendido Jefe. Registré el patrón de voz de ${nombreVozARegistrar}.`);
+        }
+        modoRegistroVoz = false;
+        nombreVozARegistrar = "";
+        return;
+    }
+
+    if (!vozJefe) {
+        localStorage.setItem('biometria_jefe', frecuenciaMediaDetectada);
+        responderConVoz("Hola. No detecto registros previos. He guardado su tono de voz como el perfil del Jefe Omar de forma automática.");
+        return;
+    }
+
+    let diferenciaConJefe = Math.abs(frecuenciaMediaDetectada - parseInt(vozJefe));
+    let esElJefe = diferenciaConJefe < 25; 
+    let nombreInvitadoDetectado = "";
+
+    if (!esElJefe) {
+        for (let invitado in listaVocesInvitados) {
+            let difInvitado = Math.abs(frec
