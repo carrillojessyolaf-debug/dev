@@ -25,6 +25,7 @@
         .contenedor-nucleo {
             position: relative;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             margin-bottom: 40px;
@@ -48,6 +49,21 @@
         .nucleo:active {
             transform: scale(0.95);
         }
+        .btn-multimodal {
+            margin-top: 20px;
+            background-color: transparent;
+            border: 2px solid #00ffcc;
+            color: #00ffcc;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .btn-multimodal:hover {
+            background-color: rgba(0, 255, 204, 0.2);
+            box-shadow: 0 0 10px #00ffcc;
+        }
         .estado {
             font-size: 1.1rem;
             text-align: center;
@@ -56,15 +72,27 @@
             text-shadow: 0 0 8px rgba(0, 255, 204, 0.5);
             min-height: 50px;
         }
+        #vista-previa-img {
+            max-width: 100px;
+            max-height: 100px;
+            margin-top: 15px;
+            border-radius: 8px;
+            display: none;
+            border: 1px solid #00ffcc;
+        }
     </style>
 </head>
 <body>
 
     <div class="contenedor-nucleo">
         <div class="nucleo" id="boton-activar">VIERNES</div>
+        
+        <button class="btn-multimodal" onclick="document.getElementById('input-archivo').click()">📷 Analizar Imagen</button>
+        <input type="file" id="input-archivo" accept="image/*" style="display: none;">
+        <img id="vista-previa-img" alt="Miniatura">
     </div>
 
-    <div class="estado" id="texto-estado">Sistema en espera. Toque el núcleo para iniciar protocolo.</div>
+    <div class="estado" id="texto-estado">Sistema en espera. Toque el núcleo para hablar o cargue una imagen.</div>
 
     <script src="app.js"></script>
 </body>
