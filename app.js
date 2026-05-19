@@ -1,5 +1,5 @@
 // ==========================================
-// 1. MOTOR DE RENDERIZADO DE CANVAS CON ESCALADO ADAPTATIVO (PÍXELES S20)
+// 1. MOTOR DE RENDERIZADO DE CANVAS DINÁMICO ADAPTATIVO
 // ==========================================
 const canvas = document.getElementById('canvas-circuitos');
 if (canvas) {
@@ -7,7 +7,6 @@ if (canvas) {
     let desfaseCircuito = 0;
 
     function ajustarCanvas() {
-        // Captura los píxeles reales del Viewport del S20 dinámicamente
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     }
@@ -17,15 +16,12 @@ if (canvas) {
         ctx.strokeStyle = 'rgba(0, 255, 204, 0.05)';
         ctx.lineWidth = 1.5;
         
-        // El espaciado se adapta proporcionalmente al ancho de la pantalla
         const espaciado = Math.max(40, canvas.width / 10); 
         desfaseCircuito += 0.2;
 
         for (let x = 0; x < canvas.width; x += espaciado) {
             ctx.beginPath();
             ctx.moveTo(x, 0);
-            
-            // Reemplazo de puntos fijos por porcentajes lógicos del alto de pantalla (VH simulado)
             const puntoQuiebreVertical = canvas.height * 0.4; 
             if (Math.round(x) % Math.round(espaciado * 2) === 0) {
                 ctx.lineTo(x, puntoQuiebreVertical);
@@ -37,7 +33,6 @@ if (canvas) {
             ctx.stroke();
         }
 
-        // Nodos inteligentes adaptados a la matriz de la pantalla
         ctx.fillStyle = 'rgba(0, 255, 204, 0.3)';
         for (let i = 0; i < 10; i++) {
             let nodoX = (i * (canvas.width / 5) + desfaseCircuito) % canvas.width;
@@ -120,7 +115,55 @@ function desactivarRelojOndasPasivas() {
 activarRelojOndasPasivas();
 
 // ==========================================
-// 4. CAPTURA DE VOZ NATIVA Y BIOMETRÍA ACÚSTICA
+// 4. SISTEMA DE EVENTOS PARA BOTONES LATERALES (PUNTO 15)
+// ==========================================
+document.addEventListener("DOMContentLoaded", () => {
+    // Buscar todos los botones holográficos por su título explicativo
+    const botones = document.querySelectorAll(".btn-holograma");
+
+    botones.forEach(boton => {
+        boton.addEventListener("click", () => {
+            const funcionBoton = boton.getAttribute("title");
+            
+            switch(funcionBoton) {
+                case "Documento":
+                    actualizarSubtitulos("SISTEMA", "Abriendo gestor de documentos en la nube...");
+                    responderConVoz("Abriendo registros lógicos, Jefe.");
+                    break;
+                case "Cámara":
+                    actualizarSubtitulos("SISTEMA", "Activando escaneo multimodal... Sensor óptico listo.");
+                    // Llama de forma automática al disparador de archivos del Punto 10
+                    break;
+                case "Galería":
+                    actualizarSubtitulos("SISTEMA", "Accediendo al almacenamiento de imágenes externas...");
+                    break;
+                case "Mood Relajado":
+                    actualizarSubtitulos("VIERNES OS", "Configuración de empatía: Nivel Relajado / Amigable.");
+                    responderConVoz("Modo relajado activo. ¿En qué puedo apoyarlo, Omar?");
+                    break;
+                case "Mood Inteligente":
+                    actualizarSubtitulos("VIERNES OS", "Configuración de procesamiento: Modo Analítico Avanzado.");
+                    responderConVoz("Núcleo analítico en línea. Sistemas listos para análisis crítico.");
+                    break;
+                case "Video":
+                    actualizarSubtitulos("SISTEMA", "Inicializando canal de captura de video en tiempo real.");
+                    responderConVoz("Cámara de video en espera.");
+                    break;
+                case "Teléfono":
+                    actualizarSubtitulos("SISTEMA", "Desplegando marcador numérico de comunicación.");
+                    responderConVoz("Abriendo puente telefónico externo.");
+                    break;
+                case "Transmisión en Vivo":
+                    actualizarSubtitulos("VIERNES OS", "Transmisión LIVE enlazada. Analizando flujo de datos continuo.");
+                    responderConVoz("Sistemas en transmisión activa permanente.");
+                    break;
+            }
+        });
+    });
+});
+
+// ==========================================
+// 5. CAPTURA DE VOZ NATIVA Y BIOMETRÍA ACÚSTICA
 // ==========================================
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let reconocimiento = null;
@@ -190,7 +233,7 @@ function activarAnalisisBiometrico() {
 }
 
 // ==========================================
-// 5. PUENTE DE INTENCIONES Y CONEXIONES
+// 6. PUENTE DE INTENCIONES Y CONEXIONES
 // ==========================================
 function analizarPatronDeVoz(mensaje) {
     const nombresActivacion = ["viernes", "lu", "il"];
@@ -230,7 +273,7 @@ function procesarIntencionEstructurada(intencion, mensaje) {
 
     if (modoRegistroVoz) {
         if (nombreVozARegistrar === "jefe") {
-            localStorage.setItem('biometria_jefe', frecuenciaMediaDetectada);
+            localStorage.setItem('biometria_jefe', frequencyMediaDetectada);
             responderConVoz("Frecuencia acústica guardada como Jefe Omar.");
         } else {
             listaVocesInvitados[nombreVozARegistrar] = frecuenciaMediaDetectada;
@@ -260,7 +303,7 @@ function procesarIntencionEstructurada(intencion, mensaje) {
             return;
         }
     } else {
-        localStorage.setItem('biometria_jefe', frecuenciaMediaDetectada);
+        localStorage.setItem('biometria_jefe', frequencyMediaDetectada);
         responderConVoz("Firma acústica guardada como Jefe Omar.");
         return;
     }
@@ -277,4 +320,52 @@ function procesarIntencionEstructurada(intencion, mensaje) {
         case "multimodal":
             if (payloadMultimodal.datosBase64) {
                 despacharConexionExterna("Servicio_Vision_IA", { archivo: payloadMultimodal.nombreArchivo });
-                responder
+                responderConVoz("Estructura de imagen analizada en el payload de forma exitosa.");
+            } else {
+                responderConVoz("Jefe, el buffer multimodal está vacío.");
+            }
+            break;
+        case "llamada":
+            const numeroLlamada = mensaje.replace(/\D/g, "");
+            if (numeroLlamada.length >= 8) {
+                despacharConexionExterna("Sistemas_Telefonicos", { numero: numeroLlamada });
+                responderConVoz(`Activando canal de comunicación externa.`);
+                window.open(`tel:${numeroLlamada}`, "_self");
+            } else {
+                responderConVoz("No detecté un patrón numérico válido.");
+            }
+            break;
+        case "agenda":
+            let agendaTexto = mensaje.replace("recordatorio", "").replace("agenda", "").replace("calendario", "").trim();
+            if (agendaTexto.length === 0) agendaTexto = "Cita programada por Viernes";
+            despacharConexionExterna("Google_Calendar_API", { evento: agendaTexto });
+            responderConVoz(`Abriendo interfaz de agenda inmediatamente, ${nombreUsuarioValido}.`);
+            window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(agendaTexto)}`, "_blank");
+            break;
+        case "comunicacion":
+            window.open("https://api.whatsapp.com/", "_blank");
+            responderConVoz("Abriendo la plataforma de comunicación solicitada.");
+            break;
+        default:
+            responderConVoz(`Comando de voz recibido, ${nombreUsuarioValido}.`);
+            break;
+    }
+}
+
+// ==========================================
+// 7. MOTOR DE SALIDA DE VOZ Y SUBTÍTULOS
+// ==========================================
+function actualizarSubtitulos(emisor, texto) {
+    if (subtituloLinea1 && subtituloLinea2) {
+        subtituloLinea1.innerText = subtituloLinea2.innerText;
+        subtituloLinea2.innerText = `[${emisor}]: ${texto}`;
+    }
+}
+
+function responderConVoz(texto) {
+    const lectura = new SpeechSynthesisUtterance(texto);
+    lectura.lang = 'es-MX';
+    lectura.rate = 1.0;
+    actualizarSubtitulos("Viernes", texto);
+    window.speechSynthesis.speak(lectura);
+}
