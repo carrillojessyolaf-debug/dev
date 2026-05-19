@@ -65,7 +65,6 @@ function procesarOrden(mensaje) {
 
             respuesta = `${momentoDia}, Jefe Omar.`;
 
-            // Agregar fecha y hora solo si se la pide explícitamente
             if (mensaje.includes("hora") || mensaje.includes("fecha")) {
                 const opcionesFecha = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 const fechaActual = ahora.toLocaleDateString('es-MX', opcionesFecha);
@@ -77,40 +76,75 @@ function procesarOrden(mensaje) {
             responderConVoz(respuesta);
         }
         
-        // 3. PROTOCOLO OBLIGATORIO: CONCIENCIA DE DATOS (Acceso total a Sensores)
+        // 3. PROTOCOLO: CONCIENCIA DE DATOS (Acceso a Sensores Básicos)
         else if (mensaje.includes("dónde estoy") || mensaje.includes("ubicación") || mensaje.includes("localización") || mensaje.includes("sensores")) {
             textoEstado.innerText = "Accediendo a los sensores del dispositivo...";
-            
-            // Captura de datos de tiempo del sistema al segundo
             const ahora = new Date();
             const opcionesFecha = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             const fechaActual = ahora.toLocaleDateString('es-MX', opcionesFecha);
             const horaActual = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-            // Intento de conexión con el sensor GPS/Geolocalización
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (posicion) => {
-                        const latitud = posicion.coords.latitude.toFixed(6);
-                        const longitud = posicion.coords.longitude.toFixed(6);
-                        
-                        // Respuesta integrada con todos los sensores solicitados
-                        respuesta = `Entendido Jefe. Accediendo a la conciencia de datos: Hoy es ${fechaActual}, hora exacta: ${horaActual}. Sus sensores de posicionamiento global reportan una latitud de ${latitud} y una longitud de ${longitud}. Localización completada, Omar.`;
-                        responderConVoz(respuesta);
-                    }, 
-                    (error) => {
-                        // En caso de que el navegador tenga los permisos de GPS bloqueados
-                        respuesta = `Jefe Omar, accedí al reloj interno: son las ${horaActual}, pero los sensores de ubicación del dispositivo están bloqueados o sin permisos de acceso.`;
-                        responderConVoz(respuesta);
-                    }
-                );
+                navigator.geolocation.getCurrentPosition((posicion) => {
+                    const latitud = posicion.coords.latitude.toFixed(4);
+                    const longitud = posicion.coords.longitude.toFixed(4);
+                    respuesta = `Entendido Jefe. Conciencia de datos: Hoy es ${fechaActual}, hora exacta: ${horaActual}. Latitud: ${latitud}, Longitud: ${longitud}.`;
+                    responderConVoz(respuesta);
+                }, () => {
+                    respuesta = `Jefe Omar, accedí al reloj interno: son las ${horaActual}, pero los sensores de ubicación están bloqueados.`;
+                    responderConVoz(respuesta);
+                });
             } else {
-                respuesta = `Jefe, el reloj marca las ${horaActual}, pero este dispositivo físico no cuenta con hardware o sensores de geolocalización disponibles en el sistema.`;
+                respuesta = `Jefe, el reloj marca las ${horaActual}, pero este dispositivo no cuenta con hardware de geolocalización.`;
                 responderConVoz(respuesta);
             }
         }
         
-        // 4. EJECUCIÓN DE TAREAS - ENLACES DE INTEGRACIÓN
+        // 4. PROTOCOLO OBLIGATORIO DE VERACIDAD (Búsqueda Real / Clima sin Alucinaciones)
+        else if (mensaje.includes("clima" || mensaje.includes("tiempo actual"))) {
+            textoEstado.innerText = "Consultando satélite meteorológico en tiempo real...";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((posicion) => {
+                    const lat = posicion.coords.latitude;
+                    const lon = posicion.coords.longitude;
+                    
+                    // Conexión directa a una API meteorológica pública y gratuita (7timer)
+                    // Evita por completo que el sistema invente la temperatura
+                    fetch(`https://www.7timer.info/bin/astro.php?lon=${lon}&lat=${lat}&ac=0&unit=metric&output=json`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const temperaturaActual = data.dataseries[0].temp2m;
+                            respuesta = `Protocolo de Veracidad activado, Jefe Omar. Los datos del satélite meteorológico para su ubicación actual reportan una temperatura en este momento de ${temperaturaActual}°C. Información verificada en tiempo real.`;
+                            responderConVoz(respuesta);
+                        })
+                        .catch(() => {
+                            respuesta = "Jefe, se interrumpió la conexión con el servidor meteorológico externo. No daré datos no verificados para evitar alucinaciones.";
+                            responderConVoz(respuesta);
+                        });
+                }, () => {
+                    respuesta = "Jefe, para darle el clima exacto necesito acceso a sus sensores de ubicación. Sin ellos, el protocolo de veracidad bloquea la respuesta.";
+                    responderConVoz(respuesta);
+                });
+            } else {
+                respuesta = "Hardware no compatible para geolocalización meteorológica en tiempo real, Jefe.";
+                responderConVoz(respuesta);
+            }
+        }
+        
+        // 5. PROTOCOLO DE VERACIDAD: Búsquedas Generales en la Web
+        else if (mensaje.includes("busca") || mensaje.includes("investiga") || mensaje.includes("internet")) {
+            // Extrae lo que quieres buscar quitando la palabra "busca" o "investiga"
+            const busqueda = mensaje.replace("busca", "").replace("investiga", "").trim();
+            
+            respuesta = `Iniciando rastreo en tiempo real para: "${busqueda}". Abriendo motores de búsqueda verificados para usted, Jefe Omar.`;
+            responderConVoz(respuesta);
+            
+            // Abre una pestaña con la búsqueda en tiempo real exacta para que el usuario verifique la información directamente
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(busqueda)}`, "_blank");
+        }
+        
+        // 6. EJECUCIÓN DE TAREAS - ENLACES DE INTEGRACIÓN
         else if (mensaje.includes("whatsapp") || mensaje.includes("mensaje")) {
             respuesta = "Abriendo la interfaz de WhatsApp para usted, Jefe.";
             responderConVoz(respuesta);
@@ -126,3 +160,24 @@ function procesarOrden(mensaje) {
             responderConVoz(respuesta);
             window.open("https://mail.google.com/", "_blank");
         }
+        
+        // Respuesta genérica
+        else {
+            respuesta = "Dígame, Jefe Omar, ¿en qué puedo asistirle? El sistema permanece a la espera de sus instrucciones.";
+            responderConVoz(respuesta);
+        }
+
+    } else {
+        respuesta = "Lo siento, solo respondo si me llamas Viernes, Lu o Il.";
+        responderConVoz(respuesta);
+    }
+}
+
+// Módulo Sintetizador de voz
+function responderConVoz(texto) {
+    const lectura = new SpeechSynthesisUtterance(texto);
+    lectura.lang = 'es-MX';
+    lectura.rate = 1.0;
+    textoEstado.innerText = texto;
+    window.speechSynthesis.speak(lectura);
+}
