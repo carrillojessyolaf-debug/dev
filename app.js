@@ -37,7 +37,7 @@ if (!SpeechRecognition) {
     };
 }
 
-// PROTOCOLO PRINCIPAL: PROCESADOR DE ÓRDENES Y CONCIENCIA DE DATOS
+// PROTOCOLO PRINCIPAL: PROCESADOR DE ÓRDENES Y MEMORIA
 function procesarOrden(mensaje) {
     let respuesta = "";
 
@@ -76,108 +76,84 @@ function procesarOrden(mensaje) {
             responderConVoz(respuesta);
         }
         
-        // 3. PROTOCOLO: CONCIENCIA DE DATOS (Acceso a Sensores Básicos)
-        else if (mensaje.includes("dónde estoy") || mensaje.includes("ubicación") || mensaje.includes("localización") || mensaje.includes("sensores")) {
-            textoEstado.innerText = "Accediendo a los sensores del dispositivo...";
-            const ahora = new Date();
-            const opcionesFecha = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const fechaActual = ahora.toLocaleDateString('es-MX', opcionesFecha);
-            const horaActual = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((posicion) => {
-                    const latitud = posicion.coords.latitude.toFixed(4);
-                    const longitud = posicion.coords.longitude.toFixed(4);
-                    respuesta = `Entendido Jefe. Conciencia de datos: Hoy es ${fechaActual}, hora exacta: ${horaActual}. Latitud: ${latitud}, Longitud: ${longitud}.`;
-                    responderConVoz(respuesta);
-                }, () => {
-                    respuesta = `Jefe Omar, accedí al reloj interno: son las ${horaActual}, pero los sensores de ubicación están bloqueados.`;
-                    responderConVoz(respuesta);
-                });
+        // 3. PROTOCOLO OBLIGATORIO: MEMORIA DE LARGO PLAZO (Guardar datos en el Historial)
+        else if (mensaje.includes("anota") || mensaje.includes("recuerda") || mensaje.includes("guarda en el historial")) {
+            // Extrae el dato útil eliminando las palabras de comando
+            let datoAGuardar = mensaje.replace("viernes", "").replace("lu", "").replace("il", "")
+                                      .replace("anota", "").replace("recuerda", "").replace("guarda en el historial", "").trim();
+            
+            if (datoAGuardar.length > 0) {
+                // Obtener el historial viejo existente o crear uno nuevo vacío si no hay nada
+                let historialCompleto = localStorage.getItem('historial_viernes') || "";
+                
+                const fechaMarca = new Date().toLocaleDateString('es-MX');
+                // Añadir el nuevo dato con un salto de línea y fecha de registro
+                historialCompleto += `[${fechaMarca}]: ${datoAGuardar}. `;
+                
+                // Guardar permanentemente en el disco del navegador
+                localStorage.setItem('historial_viernes', historialCompleto);
+                
+                respuesta = `Entendido Jefe Omar. He archivado el dato en mi memoria de largo plazo. El sistema continúa en evolución.`;
             } else {
-                respuesta = `Jefe, el reloj marca las ${horaActual}, pero este dispositivo no cuenta con hardware de geolocalización.`;
-                responderConVoz(respuesta);
+                respuesta = "Jefe, no detecté qué dato específico desea que archive en el historial.";
             }
+            responderConVoz(respuesta);
+        }
+
+        // PROTOCOLO OBLIGATORIO: MEMORIA DE LARGO PLAZO (Leer el Historial guardado)
+        else if (mensaje.includes("historial") || mensaje.includes("qué recuerdas") || mensaje.includes("lee la memoria")) {
+            let memoriaConsultada = localStorage.getItem('historial_viernes');
+            
+            if (memoriaConsultada && memoriaConsultada.trim().length > 0) {
+                respuesta = `Accediendo a nuestra base de datos histórica, Jefe Omar. Esto es lo que tengo registrado en mi memoria de largo plazo: ${memoriaConsultada}`;
+            } else {
+                respuesta = "Jefe, mi registro histórico local está vacío en este momento. No tengo datos archivados aún.";
+            }
+            responderConVoz(respuesta);
+        }
+
+        // PROTOCOLO OBLIGATORIO: MEMORIA DE LARGO PLAZO (Borrar historial si lo requieres)
+        else if (mensaje.includes("borra el historial") || mensaje.includes("reinicia tu memoria")) {
+            localStorage.removeItem('historial_viernes');
+            respuesta = "Entendido, Jefe Omar. Historial de largo plazo eliminado. Registros formateados a cero.";
+            responderConVoz(respuesta);
         }
         
-        // 4. PROTOCOLO OBLIGATORIO DE VERACIDAD (Búsqueda Real / Clima sin Alucinaciones)
-        else if (mensaje.includes("clima" || mensaje.includes("tiempo actual"))) {
+        // 4. PROTOCOLO OBLIGATORIO DE VERACIDAD (Clima sin Alucinaciones)
+        else if (mensaje.includes("clima") || mensaje.includes("tiempo actual")) {
             textoEstado.innerText = "Consultando satélite meteorológico en tiempo real...";
-            
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((posicion) => {
                     const lat = posicion.coords.latitude;
                     const lon = posicion.coords.longitude;
-                    
-                    // Conexión directa a una API meteorológica pública y gratuita (7timer)
-                    // Evita por completo que el sistema invente la temperatura
                     fetch(`https://www.7timer.info/bin/astro.php?lon=${lon}&lat=${lat}&ac=0&unit=metric&output=json`)
                         .then(response => response.json())
                         .then(data => {
                             const temperaturaActual = data.dataseries[0].temp2m;
-                            respuesta = `Protocolo de Veracidad activado, Jefe Omar. Los datos del satélite meteorológico para su ubicación actual reportan una temperatura en este momento de ${temperaturaActual}°C. Información verificada en tiempo real.`;
+                            respuesta = `Protocolo de Veracidad: Satélite reporta una temperatura de ${temperaturaActual}°C en su ubicación actual, Jefe Omar.`;
                             responderConVoz(respuesta);
                         })
                         .catch(() => {
-                            respuesta = "Jefe, se interrumpió la conexión con el servidor meteorológico externo. No daré datos no verificados para evitar alucinaciones.";
+                            respuesta = "Jefe, error de enlace con el servidor meteorológico. Respuesta bloqueada para evitar alucinaciones.";
                             responderConVoz(respuesta);
                         });
                 }, () => {
-                    respuesta = "Jefe, para darle el clima exacto necesito acceso a sus sensores de ubicación. Sin ellos, el protocolo de veracidad bloquea la respuesta.";
+                    respuesta = "Jefe, necesito permisos de ubicación para activar el protocolo de veracidad meteorológica.";
                     responderConVoz(respuesta);
                 });
             } else {
-                respuesta = "Hardware no compatible para geolocalización meteorológica en tiempo real, Jefe.";
+                respuesta = "Hardware de geolocalización no compatible, Jefe.";
                 responderConVoz(respuesta);
             }
         }
         
-        // 5. PROTOCOLO DE VERACIDAD: Búsquedas Generales en la Web
-        else if (mensaje.includes("busca") || mensaje.includes("investiga") || mensaje.includes("internet")) {
-            // Extrae lo que quieres buscar quitando la palabra "busca" o "investiga"
+        // 5. PROTOCOLO DE VERACIDAD: Búsquedas Web
+        else if (mensaje.includes("busca") || mensaje.includes("investiga")) {
             const busqueda = mensaje.replace("busca", "").replace("investiga", "").trim();
-            
-            respuesta = `Iniciando rastreo en tiempo real para: "${busqueda}". Abriendo motores de búsqueda verificados para usted, Jefe Omar.`;
+            respuesta = `Buscando en la red en tiempo real: "${busqueda}". Abriendo registros verificados, Jefe Omar.`;
             responderConVoz(respuesta);
-            
-            // Abre una pestaña con la búsqueda en tiempo real exacta para que el usuario verifique la información directamente
             window.open(`https://www.google.com/search?q=${encodeURIComponent(busqueda)}`, "_blank");
         }
         
-        // 6. EJECUCIÓN DE TAREAS - ENLACES DE INTEGRACIÓN
+        // 6. EJECUCIÓN DE TAREAS - ENLACES
         else if (mensaje.includes("whatsapp") || mensaje.includes("mensaje")) {
-            respuesta = "Abriendo la interfaz de WhatsApp para usted, Jefe.";
-            responderConVoz(respuesta);
-            window.open("https://api.whatsapp.com/", "_blank");
-        }
-        else if (mensaje.includes("calendario") || mensaje.includes("agenda") || mensaje.includes("recordatorio")) {
-            respuesta = "Entendido Jefe. Abriendo su Google Calendar para agendar el evento inmediatamente.";
-            responderConVoz(respuesta);
-            window.open("https://calendar.google.com/", "_blank");
-        }
-        else if (mensaje.includes("correo") || mensaje.includes("gmail")) {
-            respuesta = "Accediendo a su bandeja de correo de Gmail, Jefe.";
-            responderConVoz(respuesta);
-            window.open("https://mail.google.com/", "_blank");
-        }
-        
-        // Respuesta genérica
-        else {
-            respuesta = "Dígame, Jefe Omar, ¿en qué puedo asistirle? El sistema permanece a la espera de sus instrucciones.";
-            responderConVoz(respuesta);
-        }
-
-    } else {
-        respuesta = "Lo siento, solo respondo si me llamas Viernes, Lu o Il.";
-        responderConVoz(respuesta);
-    }
-}
-
-// Módulo Sintetizador de voz
-function responderConVoz(texto) {
-    const lectura = new SpeechSynthesisUtterance(texto);
-    lectura.lang = 'es-MX';
-    lectura.rate = 1.0;
-    textoEstado.innerText = texto;
-    window.speechSynthesis.speak(lectura);
-}
