@@ -4,7 +4,7 @@ const textoEstado = document.getElementById('texto-estado');
 const inputArchivo = document.getElementById('input-archivo');
 const vistaPreviaImg = document.getElementById('vista-previa-img');
 
-// ESTRUCTURA DE ALMACENAMIENTO MULTIMODAL (PUNTO 10)
+// ESTRUCTURA MULTIMODAL (PUNTO 10)
 let payloadMultimodal = {
     tipo: null,
     nombreArchivo: null,
@@ -50,7 +50,8 @@ if (!SpeechRecognition) {
         botonActivar.style.boxShadow = "0 0 20px #00ffcc";
         
         setTimeout(() => {
-            procesarVozYOrden(loQueDije);
+            // PUNTO 11: Enviamos el texto capturado al puente de análisis de patrones
+            analizarPatronDeVoz(loQueDije);
         }, 500);
     };
 }
@@ -85,38 +86,43 @@ function activarAnalisisBiometrico() {
     }).catch(() => {});
 }
 
-// RECEPTOR Y PROCESADOR MULTIMODAL ESTRUCTURADO (PUNTO 10)
-if (inputArchivo) {
-    inputArchivo.addEventListener('change', (e) => {
-        const archivo = e.target.files[0];
-        if (archivo) {
-            textoEstado.innerText = "Estructurando archivo multimedia...";
-            const reader = new FileReader();
-            
-            reader.onload = function(event) {
-                // Rellenar la estructura formal para el procesamiento del futuro
-                payloadMultimodal.tipo = archivo.type;
-                payloadMultimodal.nombreArchivo = archivo.name;
-                payloadMultimodal.tamano = `${(archivo.size / 1024).toFixed(2)} KB`;
-                payloadMultimodal.fechaCaptura = new Date().toLocaleString('es-MX');
-                payloadMultimodal.datosBase64 = event.target.result;
-                
-                // Mostrar miniatura en interfaz
-                vistaPreviaImg.src = payloadMultimodal.datosBase64;
-                vistaPreviaImg.style.display = "block";
-                
-                textoEstado.innerText = "Estructura lista. Archivo indexado correctamente.";
-                
-                // Responder confirmando la metadata del archivo cargado
-                responderConVoz(`Jefe Omar, he recibido y estructurado el archivo: ${payloadMultimodal.nombreArchivo}. El payload de ${payloadMultimodal.tamano} está listo en memoria para su procesamiento analítico futuro.`);
-            };
-            reader.readAsDataURL(archivo);
+// PUNTO 11: PUENTE DE ANÁLISIS DE PATRONES (Mapeador de Intenciones)
+function analizarPatronDeVoz(mensaje) {
+    // 1. Validar el llamado por nombre
+    const nombresActivacion = ["viernes", "lu", "il"];
+    const llamadoDetectado = nombresActivacion.some(nombre => mensaje.includes(nombre));
+
+    if (!llamadoDetectado) {
+        responderConVoz("Lo siento, solo respondo si me llamas Viernes, Lu o Il.");
+        return;
+    }
+
+    // 2. Diccionario de patrones lógicos de intención
+    const patrones = {
+        activacion: ["hola", "actívate", "despierta", "inicia", "arriba"],
+        ubicacion: ["dónde estoy", "ubicación", "localización", "coordenadas", "dónde me encuentro", "localízame"],
+        multimodal: ["analiza", "qué ves", "archivo", "escanea la imagen", "procesa la captura"],
+        llamada: ["llama", "llamar", "marcar al", "marcale a", "teléfono"],
+        agenda: ["recordatorio", "agenda", "calendario", "recuérdame", "anota en la agenda"],
+        comunicacion: ["whatsapp", "messenger", "instagram", "ig", "correo", "gmail", "mensaje"],
+        memoria: ["anota", "recuerda", "guarda en la memoria", "historial", "qué recuerdas"]
+    };
+
+    // 3. Encontrar la intención dominante según las palabras clave utilizadas
+    let intencionDetectada = "desconocida";
+    for (let intencion in patrones) {
+        if (patrones[intencion].some(palabra => mensaje.includes(palabra))) {
+            intencionDetectada = intencion;
+            break;
         }
-    });
+    }
+
+    // 4. Conmutador del puente: Redirige al bloque lógico correspondiente
+    procesarIntencionEstructurada(intencionDetectada, mensaje);
 }
 
-// PROTOCOLO COGNITIVO PRINCIPAL
-function procesarVozYOrden(mensaje) {
+// PROCESADOR DE INTENCIONES MAPEADAS
+function procesarIntencionEstructurada(intencion, mensaje) {
     let vozJefe = localStorage.getItem('biometria_jefe');
     let listaVocesInvitados = JSON.parse(localStorage.getItem('voces_invitados') || "{}");
 
@@ -134,16 +140,120 @@ function procesarVozYOrden(mensaje) {
         return;
     }
 
-    if (!vozJefe) {
-        localStorage.setItem('biometria_jefe', frecuenciaMediaDetectada);
-        responderConVoz("Hola. No detecto registros previos. He guardado su tono de voz como el perfil del Jefe Omar de forma automática.");
-        return;
-    }
-
+    // Filtro de Seguridad Biométrica Obligatorio
     let diferenciaConJefe = Math.abs(frecuenciaMediaDetectada - parseInt(vozJefe));
     let esElJefe = diferenciaConJefe < 25; 
     let nombreInvitadoDetectado = "";
 
-    if (!esElJefe) {
-        for (let invitado in listaVocesInvitados) {
-            let difInvitado = Math.abs(frec
+    if (vozJefe) {
+        if (!esElJefe) {
+            for (let invitado in listaVocesInvitados) {
+                let difInvitado = Math.abs(frecuenciaMediaDetectada - parseInt(listaVocesInvitados[invitado]));
+                if (difInvitado < 25) { nombreInvitadoDetectado = invitado; break; }
+            }
+        }
+        if (!esElJefe && nombreInvitadoDetectado === "") {
+            responderConVoz("Acceso denegado. Frecuencia de voz no autorizada en los protocolos de Viernes.");
+            return;
+        }
+    } else {
+        localStorage.setItem('biometria_jefe', frecuenciaMediaDetectada);
+        responderConVoz("Hola. Registro biométrico vacío. Firma acústica guardada como Jefe Omar.");
+        return;
+    }
+
+    let nombreUsuarioValido = esElJefe ? "Jefe Omar" : nombreInvitadoDetectado;
+
+    // Ejecución final basada en el Patrón de Intención (Punto 11)
+    switch(intencion) {
+        case "activacion":
+            const frases = ["Lu Li lista para trabajar con usted, ¿qué haremos hoy?", "Jefe, estoy lista para el show... ¿Qué procede?"];
+            responderConVoz(frases[Math.floor(Math.random() * frases.length)]);
+            break;
+
+        case "ubicacion":
+            const ahora = new Date();
+            const horaActual = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            responderConVoz(`Entendido ${nombreUsuarioValido}. Puente de audio procesado. Sensores de geolocalización activos. Hora: ${horaActual}.`);
+            break;
+
+        case "multimodal":
+            if (payloadMultimodal.datosBase64) {
+                responderConVoz(`Analizando el payload multimedia cargado el ${payloadMultimodal.fechaCaptura}. El buffer está estructurado.`);
+            } else {
+                responderConVoz("Jefe, el buffer multimodal está vacío. Registre un archivo en la interfaz primero.");
+            }
+            break;
+
+        case "llamada":
+            const numeroLlamada = mensaje.replace(/\D/g, "");
+            if (numeroLlamada.length >= 8) {
+                responderConVoz(`Activando aplicación nativa de comunicación para el número ${numeroLlamada}.`);
+                window.open(`tel:${numeroLlamada}`, "_self");
+            } else {
+                responderConVoz(`No detecté un patrón numérico válido para realizar la llamada, Jefe.`);
+            }
+            break;
+
+        case "agenda":
+            let tareaAAgendar = mensaje.replace("recordatorio", "").replace("agenda", "").replace("calendario", "").trim();
+            if (tareaAAgendar.length === 0) tareaAAgendar = "Cita programada por Viernes";
+            responderConVoz(`Abriendo Google Calendar para fijar la notificación inmediatamente, ${nombreUsuarioValido}.`);
+            window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(tareaAAgendar)}`, "_blank");
+            break;
+
+        case "comunicacion":
+            if (mensaje.includes("whatsapp")) window.open("https://api.whatsapp.com/", "_blank");
+            else if (mensaje.includes("messenger")) window.open("https://www.messenger.com/", "_blank");
+            else if (mensaje.includes("instagram") || mensaje.includes("ig")) window.open("https://www.instagram.com/", "_blank");
+            else window.open("https://mail.google.com/", "_blank");
+            responderConVoz(`Abriendo la plataforma de comunicación solicitada, ${nombreUsuarioValido}.`);
+            break;
+
+        case "memoria":
+            if (mensaje.includes("anota") || mensaje.includes("recuerda")) {
+                let datoAGuardar = mensaje.replace("anota", "").replace("recuerda", "").trim();
+                let historialCompleto = localStorage.getItem('historial_viernes') || "";
+                historialCompleto += `[${new Date().toLocaleDateString('es-MX')}]: ${datoAGuardar}. `;
+                localStorage.setItem('historial_viernes', historialCompleto);
+                responderConVoz(`Archivado en el registro histórico de largo plazo, Jefe.`);
+            } else {
+                let memoriaConsultada = localStorage.getItem('historial_viernes') || "Vacía";
+                responderConVoz(`Historial de nuestra bitácora: ${memoriaConsultada}`);
+            }
+            break;
+
+        default:
+            responderConVoz(`Comando de voz recibido, ${nombreUsuarioValido}. Patrón de intención analizado en el puente de audio de manera exitosa.`);
+            break;
+    }
+}
+
+function responderConVoz(texto) {
+    const lectura = new SpeechSynthesisUtterance(texto);
+    lectura.lang = 'es-MX';
+    lectura.rate = 1.0;
+    textoEstado.innerText = texto;
+    window.speechSynthesis.speak(lectura);
+}
+
+if (inputArchivo) {
+    inputArchivo.addEventListener('change', (e) => {
+        const archivo = e.target.files[0];
+        if (archivo) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                payloadMultimodal.tipo = archivo.type;
+                payloadMultimodal.nombreArchivo = archivo.name;
+                payloadMultimodal.tamano = `${(archivo.size / 1024).toFixed(2)} KB`;
+                payloadMultimodal.fechaCaptura = new Date().toLocaleString('es-MX');
+                payloadMultimodal.datosBase64 = event.target.result;
+                vistaPreviaImg.src = payloadMultimodal.datosBase64;
+                vistaPreviaImg.style.display = "block";
+                textoEstado.innerText = "Estructura lista. Archivo indexado correctamente.";
+                responderConVoz(`Archivo visual estructurado en el payload.`);
+            };
+            reader.readAsDataURL(archivo);
+        }
+    });
+}
