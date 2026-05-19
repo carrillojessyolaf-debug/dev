@@ -1,99 +1,52 @@
-// Elementos de la interfaz de pantalla
-const botonActivar = document.getElementById('boton-activar');
-const textoEstado = document.getElementById('texto-estado');
-const inputArchivo = document.getElementById('input-archivo');
-const vistaPreviaImg = document.getElementById('vista-previa-img');
-
-// ESTRUCTURA MULTIMODAL (PUNTO 10)
-let payloadMultimodal = {
-    tipo: null,
-    nombreArchivo: null,
-    tamano: null,
-    fechaCaptura: null,
-    datosBase64: null
-};
-
-// VARIABLES DE CONTROL DE VOZ Y BIOMETRÍA ACÚSTICA
-let audioContext = null;
-let analizador = null;
-let frecuenciaMediaDetectada = 0;
-let modoRegistroVoz = false;
-let nombreVozARegistrar = "";
-
-// Configuración del sistema de reconocimiento de voz nativo
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let reconocimiento = null;
-
-if (!SpeechRecognition) {
-    textoEstado.innerText = "Tu navegador no soporta comandos de voz.";
-} else {
-    reconocimiento = new SpeechRecognition();
-    reconocimiento.lang = 'es-MX';
-    reconocimiento.continuous = false;
-    reconocimiento.interimResults = false;
-
-    if (botonActivar) {
-        botonActivar.addEventListener('click', () => {
-            textoEstado.innerText = "Escuchando y analizando timbre de voz...";
-            botonActivar.style.borderColor = "#ff0055";
-            botonActivar.style.boxShadow = "0 0 20px #ff0055";
-            
-            activarAnalisisBiometrico();
-            reconocimiento.start();
-        });
+// ==========================================
+// MOTOR DE RENDERIZADO DE CIRCUITOS CIAN (PUNTO 13)
+// ==========================================
+const canvas = document.getElementById('canvas-circuitos');
+if (canvas) {
+    const ctx = canvas.getContext('2d');
+    
+    function ajustarCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        dibujarCircuitos();
     }
 
-    reconocimiento.onresult = (event) => {
-        const loQueDije = event.results[0][0].transcript.toLowerCase();
-        textoEstado.innerText = `Dijeste: "${loQueDije}"`;
-        botonActivar.style.borderColor = "#00ffcc";
-        botonActivar.style.boxShadow = "0 0 20px #00ffcc";
-        
-        setTimeout(() => {
-            analizarPatronDeVoz(loQueDije);
-        }, 500);
-    };
-}
+    function dibujarCircuitos() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = 'rgba(0, 255, 204, 0.06)'; // Tono cian translúcido de circuito
+        ctx.lineWidth = 1.5;
 
-function activarAnalisisBiometrico() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const fuente = audioContext.createMediaStreamSource(stream);
-        analizador = audioContext.createAnalyser();
-        analizador.fftSize = 256;
-        fuente.connect(analizador);
-        const bufferLength = analizador.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-        let sumaFrecuencias = 0;
-        let conteouestras = 0;
+        // Trazado de líneas horizontales y verticales fijas estilo red troncal
+        const espaciado = 60;
         
-        const intervalo = setInterval(() => {
-            if (!analizador) { clearInterval(intervalo); return; }
-            analizador.getByteFrequencyData(dataArray);
-            for (let i = 0; i < bufferLength; i++) {
-                if (dataArray[i] > 0) { sumaFrecuencias += dataArray[i]; conteouestras++; }
+        for (let x = 0; x < canvas.width; x += espaciado) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            // Simular desvío a 45 grados en nodos de circuitos
+            if (x % 120 === 0) {
+                ctx.lineTo(x, canvas.height * 0.4);
+                ctx.lineTo(x + 30, (canvas.height * 0.4) + 30);
+                ctx.lineTo(x + 30, canvas.height);
+            } else {
+                ctx.lineTo(x, canvas.height);
             }
-        }, 300);
+            ctx.stroke();
+        }
 
-        setTimeout(() => {
-            clearInterval(intervalo);
-            if (conteouestras > 0) { frecuenciaMediaDetectada = Math.round(sumaFrecuencias / conteouestras); }
-            stream.getTracks().forEach(track => track.stop());
-            if (audioContext) audioContext.close();
-        }, 400);
-    }).catch(() => {});
+        // Agregar pequeños nodos/círculos brillantes en intersecciones aleatorias
+        ctx.fillStyle = 'rgba(0, 255, 204, 0.2)';
+        for (let i = 0; i < 15; i++) {
+            let nodoX = Math.round((Math.random() * canvas.width) / espaciado) * espaciado;
+            let nodoY = Math.round((Math.random() * canvas.height) / espaciado) * espaciado;
+            ctx.beginPath();
+            ctx.arc(nodoX, nodoY, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    window.addEventListener('resize', ajustarCanvas);
+    ajustarCanvas();
 }
-
-// RECEPTOR MULTIMODAL ESTRUCTURADO (PUNTO 10)
-if (inputArchivo) {
-    inputArchivo.addEventListener('change', (e) => {
-        const archivo = e.target.files[0];
-        if (archivo) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                payloadMultimodal.tipo = archivo.type;
-                payloadMultimodal.nombreArchivo = archivo.name;
-                payloadMultimodal.tamano = `${(archivo.size / 1024).toFixed(2)} KB`;
-                payloadMultimodal.fechaCaptura = new Date().toLocaleString('es-MX');
-                payloadMultimodal.datosBase64 = event.target.result;
+// ==========================================
+// AQUÍ CONTINÚA TU CÓDIGO PREVIO DE APP.JS...
+// ==========================================
