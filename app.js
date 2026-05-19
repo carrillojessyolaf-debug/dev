@@ -1,5 +1,5 @@
 // ==========================================
-// 1. MOTOR DE RENDERIZADO DE CANVAS DINÁMICO ADAPTATIVO
+// 1. MOTOR GRÁFICO DEL CANVAS (CIRCUITOS ADAPTATIVOS S20)
 // ==========================================
 const canvas = document.getElementById('canvas-circuitos');
 if (canvas) {
@@ -66,6 +66,7 @@ let frecuenciaMediaDetectada = 0;
 let modoRegistroVoz = false;
 let nombreVozARegistrar = "";
 let relojOndasPasivas = null;
+let wakeLock = null; // Guardará el bloqueo de apagado de pantalla
 
 if (inputArchivo) {
     inputArchivo.addEventListener('change', (e) => {
@@ -91,7 +92,7 @@ if (inputArchivo) {
 }
 
 // ==========================================
-// 3. RELOJ DE ONDAS PASIVAS (ESCUCHA EN ESPERA)
+// 3. RELOJ DE ONDAS PASIVAS (ESCUCHA EN ESPERA 0.1s)
 // ==========================================
 function activarRelojOndasPasivas() {
     const barrasUI = document.querySelectorAll('.barra-onda');
@@ -115,16 +116,34 @@ function desactivarRelojOndasPasivas() {
 activarRelojOndasPasivas();
 
 // ==========================================
-// 4. SISTEMA DE EVENTOS PARA BOTONES LATERALES (PUNTO 15)
+// 4. OPTIMIZACIÓN 1: PREVENIR APAGADO DE PANTALLA (WAKE LOCK)
+// ==========================================
+async function solicitarWakeLock() {
+    if ('wakeLock' in navigator) {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log("[WAKE LOCK ACTIVO]: El S20 no apagará la pantalla.");
+        } catch (err) {
+            console.log(`Fallo al bloquear apagado de pantalla: ${err.message}`);
+        }
+    }
+}
+// Forzar encendido permanente al cargar la app y al regresar a la pestaña
+solicitarWakeLock();
+document.addEventListener('visibilitychange', () => {
+    if (wakeLock !== null && document.visibilityState === 'visible') {
+        solicitarWakeLock();
+    }
+});
+
+// ==========================================
+// 5. SISTEMA DE EVENTOS PARA BOTONES LATERALES
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-    // Buscar todos los botones holográficos por su título explicativo
     const botones = document.querySelectorAll(".btn-holograma");
-
     botones.forEach(boton => {
         boton.addEventListener("click", () => {
             const funcionBoton = boton.getAttribute("title");
-            
             switch(funcionBoton) {
                 case "Documento":
                     actualizarSubtitulos("SISTEMA", "Abriendo gestor de documentos en la nube...");
@@ -132,7 +151,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     break;
                 case "Cámara":
                     actualizarSubtitulos("SISTEMA", "Activando escaneo multimodal... Sensor óptico listo.");
-                    // Llama de forma automática al disparador de archivos del Punto 10
                     break;
                 case "Galería":
                     actualizarSubtitulos("SISTEMA", "Accediendo al almacenamiento de imágenes externas...");
@@ -163,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 5. CAPTURA DE VOZ NATIVA Y BIOMETRÍA ACÚSTICA
+// 6. OPTIMIZACIÓN 2: ESCUCHA ACTIVA AUTÓNOMA CONTINUA (WAKE WORD)
 // ==========================================
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let reconocimiento = null;
@@ -173,25 +191,36 @@ if (!SpeechRecognition) {
 } else {
     reconocimiento = new SpeechRecognition();
     reconocimiento.lang = 'es-MX';
-    reconocimiento.continuous = false;
+    reconocimiento.continuous = true; // El micrófono NO se apaga, se queda escuchando siempre
     reconocimiento.interimResults = false;
+
+    // Arrancar el reconocimiento automáticamente en segundo plano para que sea manos libres
+    window.addEventListener('load', () => {
+        try { reconocimiento.start(); } catch(e) {}
+    });
 
     if (botonActivar) {
         botonActivar.addEventListener('click', () => {
             desactivarRelojOndasPasivas();
             actualizarSubtitulos("VIERNES OS", "Escuchando y analizando timbre de voz...");
             activarAnalisisBiometrico();
-            reconocimiento.start();
+            try { reconocimiento.start(); } catch(e) {}
         });
     }
 
     reconocimiento.onresult = (event) => {
-        const loQueDije = event.results[0][0].transcript.toLowerCase();
+        // Capturar la última frase dicha por el usuario en el flujo continuo
+        const indiceUltimoResult = event.results.length - 1;
+        const loQueDije = event.results[indiceUltimoResult][0].transcript.toLowerCase().trim();
+        
         actualizarSubtitulos("USUARIO", `"${loQueDije}"`);
-        setTimeout(() => { analizarPatronDeVoz(loQueDije); }, 500);
+        analizarPatronDeVoz(loQueDije);
     };
     
-    reconocimiento.onerror = () => { activarRelojOndasPasivas(); };
+    // Si el motor web del navegador corta el micrófono por inactividad, forzamos su auto-encendido instantáneo
+    reconocimiento.onend = () => {
+        try { reconocimiento.start(); } catch(e) {}
+    };
 }
 
 function activarAnalisisBiometrico() {
@@ -225,24 +254,25 @@ function activarAnalisisBiometrico() {
             if (audioContext) audioContext.close();
             analizador = null;
             activarRelojOndasPasivas();
-        }, 4000); 
+        }, 3000); 
     }).catch(() => {
-        actualizarSubtitulos("ERROR HARDWARE", "Micrófono bloqueado.");
         activarRelojOndasPasivas();
     });
 }
 
 // ==========================================
-// 6. PUENTE DE INTENCIONES Y CONEXIONES
+// 7. PUENTE DE INTENCIONES BIOMÉTRICAS
 // ==========================================
 function analizarPatronDeVoz(mensaje) {
     const nombresActivacion = ["viernes", "lu", "il"];
     const llamadoDetectado = nombresActivacion.some(nombre => mensaje.includes(nombre));
 
-    if (!llamadoDetectado) {
-        responderConVoz("Lo siento, solo respondo si me llamas Viernes, Lu o Il.");
-        return;
-    }
+    // Si el micrófono continuo escucha una plática normal y nadie llama a la IA, ignora el texto
+    if (!llamadoDetectado) return;
+
+    // Activa la biometría visual en las barras solo al detectar la Wake Word
+    desactivarRelojOndasPasivas();
+    activarAnalisisBiometrico();
 
     const patrones = {
         activacion: ["hola", "actívate", "despierta", "inicia"],
@@ -256,116 +286,3 @@ function analizarPatronDeVoz(mensaje) {
     let intencionDetectada = "desconocida";
     for (let intencion in patrones) {
         if (patrones[intencion].some(palabra => mensaje.includes(palabra))) {
-            intencionDetectada = intencion;
-            break;
-        }
-    }
-    procesarIntencionEstructurada(intencionDetectada, mensaje);
-}
-
-function despacharConexionExterna(servicio, datosAccion) {
-    console.log(`[API DISPATCH] Destino: ${servicio}.`, datosAccion);
-}
-
-function procesarIntencionEstructurada(intencion, mensaje) {
-    let vozJefe = localStorage.getItem('biometria_jefe');
-    let listaVocesInvitados = JSON.parse(localStorage.getItem('voces_invitados') || "{}");
-
-    if (modoRegistroVoz) {
-        if (nombreVozARegistrar === "jefe") {
-            localStorage.setItem('biometria_jefe', frequencyMediaDetectada);
-            responderConVoz("Frecuencia acústica guardada como Jefe Omar.");
-        } else {
-            listaVocesInvitados[nombreVozARegistrar] = frecuenciaMediaDetectada;
-            localStorage.setItem('voces_invitados', JSON.stringify(listaVocesInvitados));
-            responderConVoz(`Registré el patrón de voz de ${nombreVozARegistrar}.`);
-        }
-        modoRegistroVoz = false;
-        nombreVozARegistrar = "";
-        return;
-    }
-
-    let diferenciaConJefe = Math.abs(frecuenciaMediaDetectada - parseInt(vozJefe));
-    let esElJefe = diferenciaConJefe < 25; 
-    let nombreInvitadoDetectado = "";
-
-    if (vozJefe) {
-        if (!esElJefe) {
-            for (let invitado in listaVocesInvitados) {
-                if (Math.abs(frecuenciaMediaDetectada - parseInt(listaVocesInvitados[invitado])) < 25) {
-                    nombreInvitadoDetectado = invitado;
-                    break;
-                }
-            }
-        }
-        if (!esElJefe && nombreInvitadoDetectado === "") {
-            responderConVoz("Acceso denegado. Frecuencia de voz no autorizada.");
-            return;
-        }
-    } else {
-        localStorage.setItem('biometria_jefe', frequencyMediaDetectada);
-        responderConVoz("Firma acústica guardada como Jefe Omar.");
-        return;
-    }
-
-    let nombreUsuarioValido = esElJefe ? "Jefe Omar" : nombreInvitadoDetectado;
-
-    switch(intencion) {
-        case "activacion":
-            responderConVoz(`Lu Li lista para trabajar con usted, ${nombreUsuarioValido}.`);
-            break;
-        case "ubicacion":
-            responderConVoz(`Protocolo de sensores activos, ${nombreUsuarioValido}.`);
-            break;
-        case "multimodal":
-            if (payloadMultimodal.datosBase64) {
-                despacharConexionExterna("Servicio_Vision_IA", { archivo: payloadMultimodal.nombreArchivo });
-                responderConVoz("Estructura de imagen analizada en el payload de forma exitosa.");
-            } else {
-                responderConVoz("Jefe, el buffer multimodal está vacío.");
-            }
-            break;
-        case "llamada":
-            const numeroLlamada = mensaje.replace(/\D/g, "");
-            if (numeroLlamada.length >= 8) {
-                despacharConexionExterna("Sistemas_Telefonicos", { numero: numeroLlamada });
-                responderConVoz(`Activando canal de comunicación externa.`);
-                window.open(`tel:${numeroLlamada}`, "_self");
-            } else {
-                responderConVoz("No detecté un patrón numérico válido.");
-            }
-            break;
-        case "agenda":
-            let agendaTexto = mensaje.replace("recordatorio", "").replace("agenda", "").replace("calendario", "").trim();
-            if (agendaTexto.length === 0) agendaTexto = "Cita programada por Viernes";
-            despacharConexionExterna("Google_Calendar_API", { evento: agendaTexto });
-            responderConVoz(`Abriendo interfaz de agenda inmediatamente, ${nombreUsuarioValido}.`);
-            window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(agendaTexto)}`, "_blank");
-            break;
-        case "comunicacion":
-            window.open("https://api.whatsapp.com/", "_blank");
-            responderConVoz("Abriendo la plataforma de comunicación solicitada.");
-            break;
-        default:
-            responderConVoz(`Comando de voz recibido, ${nombreUsuarioValido}.`);
-            break;
-    }
-}
-
-// ==========================================
-// 7. MOTOR DE SALIDA DE VOZ Y SUBTÍTULOS
-// ==========================================
-function actualizarSubtitulos(emisor, texto) {
-    if (subtituloLinea1 && subtituloLinea2) {
-        subtituloLinea1.innerText = subtituloLinea2.innerText;
-        subtituloLinea2.innerText = `[${emisor}]: ${texto}`;
-    }
-}
-
-function responderConVoz(texto) {
-    const lectura = new SpeechSynthesisUtterance(texto);
-    lectura.lang = 'es-MX';
-    lectura.rate = 1.0;
-    actualizarSubtitulos("Viernes", texto);
-    window.speechSynthesis.speak(lectura);
-}
