@@ -1,65 +1,60 @@
-// Elementos de la pantalla que vamos a controlar
+// Elementos de la pantalla
 const botonActivar = document.getElementById('boton-activar');
 const textoEstado = document.getElementById('texto-estado');
 
-// Configuración del sistema de reconocimiento de voz de tu celular o computadora
+// Configuración del sistema de reconocimiento de voz
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
     textoEstado.innerText = "Tu navegador no soporta comandos de voz.";
 } else {
     const reconocimiento = new SpeechRecognition();
-    reconocimiento.lang = 'es-MX'; // Idioma Español de México
+    reconocimiento.lang = 'es-MX';
     reconocimiento.continuous = false;
     reconocimiento.interimResults = false;
 
-    // Al hacer clic o tocar el núcleo de Viernes
-    botonActivar.click = () => { iniciarViernes(); };
-    botonActivar.addEventListener('click', () => {
-        iniciarViernes();
-    });
-
-    function iniciarViernes() {
-        textoEstado.innerText = "Escuchando...";
-        botonActivar.style.borderColor = "#ff0055"; // Cambia de color al escuchar
-        botonActivar.style.boxShadow = "0 0 20px #ff0055";
-        reconocimiento.start();
+    if (botonActivar) {
+        botonActivar.addEventListener('click', () => {
+            textoEstado.innerText = "Escuchando...";
+            botonActivar.style.borderColor = "#ff0055";
+            botonActivar.style.boxShadow = "0 0 20px #ff0055";
+            reconocimiento.start();
+        });
     }
 
-    // Cuando el sistema termina de escuchar lo que dijiste
     reconocimiento.onresult = (event) => {
         const loQueDije = event.results[0][0].transcript.toLowerCase();
         textoEstado.innerText = `Dijiste: "${loQueDije}"`;
-        botonActivar.style.borderColor = "#00ffcc"; // Regresa al color original
+        botonActivar.style.borderColor = "#00ffcc";
         botonActivar.style.boxShadow = "0 0 20px #00ffcc";
         
         procesarOrden(loQueDije);
     };
 
-    // Si hay un error o dejas de hablar
     reconocimiento.onerror = () => {
         textoEstado.innerText = "No te escuché bien. Presiona de nuevo.";
         botonActivar.style.borderColor = "#00ffcc";
     };
 }
 
-// PROTOCOLO DE IDENTIDAD Y RESPUESTA (Aquí se configuran tus órdenes)
+// PROTOCOLO DE IDENTIDAD, SENSORES Y RESPUESTA
 function procesarOrden(mensaje) {
     let respuesta = "";
 
-    // Evalúa si lo llamaste Viernes, Lu o Il
+    // Verificar si llamaste a Viernes, Lu o Il
     if (mensaje.includes("viernes") || mensaje.includes("lu") || mensaje.includes("il")) {
         
-        // Protocolo Obligatorio de Activación
+        // 1. OBLIGATORIO: Frases de Activación
         if (mensaje.includes("hola") || mensaje.includes("actívate") || mensaje.includes("despierta")) {
-            // Elige una frase de forma aleatoria de tus opciones obligatorias
             const frases = [
                 "Lu Li lista para trabajar con usted, ¿qué haremos hoy?",
                 "Jefe, estoy lista para el show... ¿Qué procede?"
             ];
             respuesta = frases[Math.floor(Math.random() * frases.length)];
+            responderConVoz(respuesta);
         } 
-        // Protocolo Obligatorio de Saludo con Hora y Fecha
+        
+        // 2. OBLIGATORIO: Saludo Completo
         else if (mensaje.includes("salúdame") || mensaje.includes("saludo")) {
             const ahora = new Date();
             const horas = ahora.getHours();
@@ -72,27 +67,57 @@ function procesarOrden(mensaje) {
             if (horas >= 19 || horas < 6) momentoDia = "Buenas noches";
 
             respuesta = `${momentoDia} Jefe Omar. Hoy es ${fechaActual} y son las ${horaActual}.`;
+            responderConVoz(respuesta);
         }
-        // Si no entiende la orden pero dijiste su nombre
+        
+        // 3. OBLIGATORIO: Conciencia de Datos (Sensores y Ubicación)
+        else if (mensaje.includes("dónde estoy") || mensaje.includes("ubicación") || mensaje.includes("localización")) {
+            textoEstado.innerText = "Accediendo a los sensores de ubicación...";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (posicion) => {
+                        const latitud = posicion.coords.latitude.toFixed(4);
+                        const longitud = posicion.coords.longitude.toFixed(4);
+                        respuesta = `Jefe, según los sensores de su dispositivo, su ubicación actual es latitud ${latitud} y longitud ${longitud}. Sistema rastreado correctamente.`;
+                        responderConVoz(respuesta);
+                    },
+                    (error) => {
+                        respuesta = "Jefe, no pude acceder a los sensores de ubicación. Por favor, verifique los permisos de su navegador.";
+                        responderConVoz(respuesta);
+                    }
+                );
+            } else {
+                respuesta = "Este dispositivo no cuenta con sensores de geolocalización disponibles, Jefe.";
+                responderConVoz(respuesta);
+            }
+        }
+        
+        // 4. OBLIGATORIO: Protocolo de Veracidad (Simulación de búsqueda en tiempo real)
+        else if (mensaje.includes("busca") || mensaje.includes("investiga") || mensaje.includes("clima")) {
+            respuesta = "Iniciando Protocolo de Veracidad. Conectando con los servidores de búsqueda en tiempo real para evitar alucinaciones... Buscando información actualizada al segundo para usted, Jefe Omar.";
+            responderConVoz(respuesta);
+            // Nota: En el siguiente paso conectaremos esto a una API real de internet
+        }
+        
+        // Si no detecta una orden exacta
         else {
-            respuesta = "Entendido Jefe, detecto mi nombre pero aún no tengo programada esa función específica. Vamos paso a paso.";
+            respuesta = "Entendido Jefe, procesé su llamado pero esa función requiere conexión avanzada. Vamos paso a paso.";
+            responderConVoz(respuesta);
         }
 
     } else {
-        // Si hablaste pero no dijiste su nombre de activación
         respuesta = "Lo siento, solo respondo si me llamas Viernes, Lu o Il.";
+        responderConVoz(respuesta);
     }
-
-    responderConVoz(respuesta);
 }
 
-// Función para que Viernes te hable de regreso (Sintetizador de voz)
+// Sintetizador de voz
 function responderConVoz(texto) {
     const lectura = new SpeechSynthesisUtterance(texto);
     lectura.lang = 'es-MX';
-    lectura.rate = 1.0; // Velocidad de la voz
+    lectura.rate = 1.0;
     
-    // Cambiar texto en pantalla para que leas lo que dice
     textoEstado.innerText = texto;
     window.speechSynthesis.speak(lectura);
 }
