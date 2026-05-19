@@ -31,7 +31,6 @@ if (!SpeechRecognition) {
             botonActivar.style.borderColor = "#ff0055";
             botonActivar.style.boxShadow = "0 0 20px #ff0055";
             
-            // Iniciar captura física de frecuencias de audio
             activarAnalisisBiometrico();
             reconocimiento.start();
         });
@@ -43,23 +42,51 @@ if (!SpeechRecognition) {
         botonActivar.style.borderColor = "#00ffcc";
         botonActivar.style.boxShadow = "0 0 20px #00ffcc";
         
-        // Detener el análisis de hardware para procesar los datos
         setTimeout(() => {
             procesarVozYOrden(loQueDije);
         }, 500);
     };
 }
 
-// FUNCIÓN DE HARDWARE: Analiza las frecuencias físicas del micrófono
 function activarAnalisisBiometrico() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-    
     navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const fuente = audioContext.createMediaStreamSource(stream);
         analizador = audioContext.createAnalyser();
         analizador.fftSize = 256;
         fuente.connect(analizador);
-        
         const bufferLength = analizador.frequencyBinCount;
-        const dataArray = new Uint8Array(
+        const dataArray = new Uint8Array(bufferLength);
+        let sumaFrecuencias = 0;
+        let conteouestras = 0;
+        
+        const intervalo = setInterval(() => {
+            if (!analizador) { clearInterval(intervalo); return; }
+            analizador.getByteFrequencyData(dataArray);
+            for (let i = 0; i < bufferLength; i++) {
+                if (dataArray[i] > 0) { sumaFrecuencias += dataArray[i]; conteouestras++; }
+            }
+        }, 300);
+
+        setTimeout(() => {
+            clearInterval(intervalo);
+            if (conteouestras > 0) { frecuenciaMediaDetectada = Math.round(sumaFrecuencias / conteouestras); }
+            stream.getTracks().forEach(track => track.stop());
+            if (audioContext) audioContext.close();
+        }, 400);
+    }).catch(() => {});
+}
+
+// PROTOCOLO COGNITIVO PRINCIPAL
+function procesarVozYOrden(mensaje) {
+    let vozJefe = localStorage.getItem('biometria_jefe');
+    let listaVocesInvitados = JSON.parse(localStorage.getItem('voces_invitados') || "{}");
+
+    if (modoRegistroVoz) {
+        if (nombreVozARegistrar === "jefe") {
+            localStorage.setItem('biometria_jefe', frecuenciaMediaDetectada);
+            responderConVoz(`Frecuencia acústica guardada. Identidad del Jefe Omar vinculada al sistema correctamente.`);
+        } else {
+            listaVocesInvitados[nombreVozARegistrar] = frecuenciaMediaDetectada;
+            localStorage.setItem('voces_invitados', JSON.stringify(listaVocesInvitados
