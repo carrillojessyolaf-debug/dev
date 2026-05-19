@@ -1,5 +1,5 @@
 // ==========================================
-// 1. MOTOR DE RENDERIZADO DE CANVAS DINÁMICO (EL RELOJ DE CIRCUITOS)
+// 1. MOTOR DE RENDERIZADO DE CANVAS CON ESCALADO ADAPTATIVO (PÍXELES S20)
 // ==========================================
 const canvas = document.getElementById('canvas-circuitos');
 if (canvas) {
@@ -7,37 +7,41 @@ if (canvas) {
     let desfaseCircuito = 0;
 
     function ajustarCanvas() {
+        // Captura los píxeles reales del Viewport del S20 dinámicamente
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     }
 
-    // Bucle de animación continuo (Equivalente al Clock de Kivy a máxima tasa de refresco)
     function bucleCircuitos() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.strokeStyle = 'rgba(0, 255, 204, 0.05)';
         ctx.lineWidth = 1.5;
         
-        const espaciado = 60;
-        desfaseCircuito += 0.2; // Velocidad del pulso de la red
+        // El espaciado se adapta proporcionalmente al ancho de la pantalla
+        const espaciado = Math.max(40, canvas.width / 10); 
+        desfaseCircuito += 0.2;
 
         for (let x = 0; x < canvas.width; x += espaciado) {
             ctx.beginPath();
             ctx.moveTo(x, 0);
-            if (x % 120 === 0) {
-                ctx.lineTo(x, canvas.height * 0.4);
-                ctx.lineTo(x + 30, (canvas.height * 0.4) + 30);
-                ctx.lineTo(x + 30, canvas.height);
+            
+            // Reemplazo de puntos fijos por porcentajes lógicos del alto de pantalla (VH simulado)
+            const puntoQuiebreVertical = canvas.height * 0.4; 
+            if (Math.round(x) % Math.round(espaciado * 2) === 0) {
+                ctx.lineTo(x, puntoQuiebreVertical);
+                ctx.lineTo(x + (espaciado * 0.5), puntoQuiebreVertical + 30);
+                ctx.lineTo(x + (espaciado * 0.5), canvas.height);
             } else {
                 ctx.lineTo(x, canvas.height);
             }
             ctx.stroke();
         }
 
-        // Nodos brillantes que se mueven por el circuito de forma autónoma
+        // Nodos inteligentes adaptados a la matriz de la pantalla
         ctx.fillStyle = 'rgba(0, 255, 204, 0.3)';
         for (let i = 0; i < 10; i++) {
-            let nodoX = (i * 150 + desfaseCircuito) % canvas.width;
-            let nodoY = (i * 100 + desfaseCircuito * 0.5) % canvas.height;
+            let nodoX = (i * (canvas.width / 5) + desfaseCircuito) % canvas.width;
+            let nodoY = (i * (canvas.height / 8) + desfaseCircuito * 0.5) % canvas.height;
             ctx.beginPath();
             ctx.arc(nodoX, nodoY, 2.5, 0, Math.PI * 2);
             ctx.fill();
@@ -48,7 +52,7 @@ if (canvas) {
 
     window.addEventListener('resize', ajustarCanvas);
     ajustarCanvas();
-    bucleCircuitos(); // Arranca el motor de renderizado de fondo
+    bucleCircuitos(); 
 }
 
 // ==========================================
@@ -66,7 +70,7 @@ let analizador = null;
 let frecuenciaMediaDetectada = 0;
 let modoRegistroVoz = false;
 let nombreVozARegistrar = "";
-let relojOndasPasivas = null; // Guardará el temporizador de pulso pasivo
+let relojOndasPasivas = null;
 
 if (inputArchivo) {
     inputArchivo.addEventListener('change', (e) => {
@@ -92,16 +96,14 @@ if (inputArchivo) {
 }
 
 // ==========================================
-// 3. RELOJ DE ONDAS PASIVAS (ESCUCHA EN ESPERA - 0.1 SEGUNDOS)
+// 3. RELOJ DE ONDAS PASIVAS (ESCUCHA EN ESPERA)
 // ==========================================
 function activarRelojOndasPasivas() {
     const barrasUI = document.querySelectorAll('.barra-onda');
     if (relojOndasPasivas) clearInterval(relojOndasPasivas);
 
-    // BUCLE DEL RELOJ: Altera la altura de forma aleatoria cada 0.1 segundos (100ms)
     relojOndasPasivas = setInterval(() => {
         barrasUI.forEach((barra) => {
-            // Genera variaciones sutiles de altura simulando escaneo de ambiente
             const alturaAleatoria = Math.floor(Math.random() * (30 - 12 + 1)) + 12;
             barra.style.height = `${alturaAleatoria}px`;
         });
@@ -115,7 +117,6 @@ function desactivarRelojOndasPasivas() {
     }
 }
 
-// Iniciar el ciclo de vida pasivo inmediatamente al cargar la aplicación
 activarRelojOndasPasivas();
 
 // ==========================================
@@ -125,7 +126,7 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
 let reconocimiento = null;
 
 if (!SpeechRecognition) {
-    if (subtituloLinea1) subtituloLinea1.innerText = "Error: Navegador no compatible con reconocimiento de voz.";
+    if (subtituloLinea1) subtituloLinea1.innerText = "Error: Navegador no compatible.";
 } else {
     reconocimiento = new SpeechRecognition();
     reconocimiento.lang = 'es-MX';
@@ -134,7 +135,7 @@ if (!SpeechRecognition) {
 
     if (botonActivar) {
         botonActivar.addEventListener('click', () => {
-            desactivarRelojOndasPasivas(); // Pausamos el reloj pasivo para dar paso al micrófono real
+            desactivarRelojOndasPasivas();
             actualizarSubtitulos("VIERNES OS", "Escuchando y analizando timbre de voz...");
             activarAnalisisBiometrico();
             reconocimiento.start();
@@ -147,9 +148,7 @@ if (!SpeechRecognition) {
         setTimeout(() => { analizarPatronDeVoz(loQueDije); }, 500);
     };
     
-    reconocimiento.onerror = () => {
-        activarRelojOndasPasivas(); // Si hay error, regresa al bucle del reloj
-    };
+    reconocimiento.onerror = () => { activarRelojOndasPasivas(); };
 }
 
 function activarAnalisisBiometrico() {
@@ -165,8 +164,6 @@ function activarAnalisisBiometrico() {
         
         const bufferLength = analizador.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
-        let sumaFrecuencias = 0;
-        let conteouestras = 0;
         
         const refrescarOndasVoz = () => {
             if (!analizador) return;
@@ -180,22 +177,11 @@ function activarAnalisisBiometrico() {
         };
         refrescarOndasVoz();
         
-        const intervalo = setInterval(() => {
-            if (!analizador) { clearInterval(intervalo); return; }
-            analizador.getByteFrequencyData(dataArray);
-            for (let i = 0; i < bufferLength; i++) {
-                if (dataArray[i] > 0) { sumaFrecuencias += dataArray[i]; conteouestras++; }
-            }
-        }, 300);
-
         setTimeout(() => {
-            clearInterval(intervalo);
-            if (conteouestras > 0) { frecuenciaMediaDetectada = Math.round(sumaFrecuencias / conteouestras); }
             stream.getTracks().forEach(track => track.stop());
             if (audioContext) audioContext.close();
             analizador = null;
-            
-            activarRelojOndasPasivas(); // Al apagarse el micrófono, reactivamos el reloj de 0.1s
+            activarRelojOndasPasivas();
         }, 4000); 
     }).catch(() => {
         actualizarSubtitulos("ERROR HARDWARE", "Micrófono bloqueado.");
@@ -204,7 +190,7 @@ function activarAnalisisBiometrico() {
 }
 
 // ==========================================
-// 5. PUENTE DE INTENCIONES Y CONEXIONES (PUNTOS 11 Y 12)
+// 5. PUENTE DE INTENCIONES Y CONEXIONES
 // ==========================================
 function analizarPatronDeVoz(mensaje) {
     const nombresActivacion = ["viernes", "lu", "il"];
@@ -291,52 +277,4 @@ function procesarIntencionEstructurada(intencion, mensaje) {
         case "multimodal":
             if (payloadMultimodal.datosBase64) {
                 despacharConexionExterna("Servicio_Vision_IA", { archivo: payloadMultimodal.nombreArchivo });
-                responderConVoz("Estructura de imagen analizada en el payload de forma exitosa.");
-            } else {
-                responderConVoz("Jefe, el buffer multimodal está vacío.");
-            }
-            break;
-        case "llamada":
-            const numeroLlamada = mensaje.replace(/\D/g, "");
-            if (numeroLlamada.length >= 8) {
-                despacharConexionExterna("Sistemas_Telefonicos", { numero: numeroLlamada });
-                responderConVoz(`Activando canal de comunicación externa.`);
-                window.open(`tel:${numeroLlamada}`, "_self");
-            } else {
-                responderConVoz("No detecté un patrón numérico válido.");
-            }
-            break;
-        case "agenda":
-            let agendaTexto = mensaje.replace("recordatorio", "").replace("agenda", "").replace("calendario", "").trim();
-            if (agendaTexto.length === 0) agendaTexto = "Cita programada por Viernes";
-            despacharConexionExterna("Google_Calendar_API", { evento: agendaTexto });
-            responderConVoz(`Abriendo interfaz de agenda inmediatamente, ${nombreUsuarioValido}.`);
-            window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(agendaTexto)}`, "_blank");
-            break;
-        case "comunicacion":
-            window.open("https://api.whatsapp.com/", "_blank");
-            responderConVoz("Abriendo la plataforma de comunicación solicitada.");
-            break;
-        default:
-            responderConVoz(`Comando de voz recibido, ${nombreUsuarioValido}.`);
-            break;
-    }
-}
-
-// ==========================================
-// 6. MOTOR DE SALIDA DE VOZ Y SUBTÍTULOS
-// ==========================================
-function actualizarSubtitulos(emisor, texto) {
-    if (subtituloLinea1 && subtituloLinea2) {
-        subtituloLinea1.innerText = subtituloLinea2.innerText;
-        subtituloLinea2.innerText = `[${emisor}]: ${texto}`;
-    }
-}
-
-function responderConVoz(texto) {
-    const lectura = new SpeechSynthesisUtterance(texto);
-    lectura.lang = 'es-MX';
-    lectura.rate = 1.0;
-    actualizarSubtitulos("Viernes", texto);
-    window.speechSynthesis.speak(lectura);
-}
+                responder
