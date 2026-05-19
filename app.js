@@ -1,52 +1,63 @@
-// ==========================================
-// MOTOR DE RENDERIZADO DE CIRCUITOS CIAN (PUNTO 13)
-// ==========================================
-const canvas = document.getElementById('canvas-circuitos');
-if (canvas) {
-    const ctx = canvas.getContext('2d');
+// MODULADOR DE ONDAS EN TIEMPO REAL (PUNTO 14)
+function activarAnalisisBiometrico() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
     
-    function ajustarCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        dibujarCircuitos();
-    }
-
-    function dibujarCircuitos() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = 'rgba(0, 255, 204, 0.06)'; // Tono cian translúcido de circuito
-        ctx.lineWidth = 1.5;
-
-        // Trazado de líneas horizontales y verticales fijas estilo red troncal
-        const espaciado = 60;
+    const barrasUI = document.querySelectorAll('.barra-onda');
+    
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const fuente = audioContext.createMediaStreamSource(stream);
+        analizador = audioContext.createAnalyser();
+        analizador.fftSize = 64; // Tamaño de buffer optimizado para las 10 barras de la UI
+        fuente.connect(analizador);
         
-        for (let x = 0; x < canvas.width; x += espaciado) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            // Simular desvío a 45 grados en nodos de circuitos
-            if (x % 120 === 0) {
-                ctx.lineTo(x, canvas.height * 0.4);
-                ctx.lineTo(x + 30, (canvas.height * 0.4) + 30);
-                ctx.lineTo(x + 30, canvas.height);
-            } else {
-                ctx.lineTo(x, canvas.height);
+        const bufferLength = analizador.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        let sumaFrecuencias = 0;
+        let conteouestras = 0;
+        
+        // Bucle de renderizado para mover las ondas de la pantalla
+        const refrescarOndas = () => {
+            if (!analizador) return;
+            requestAnimationFrame(refrescarOndas);
+            
+            analizador.getByteFrequencyData(dataArray);
+            
+            // Mapear los datos de audio directamente a las 10 barras cian de la UI
+            barrasUI.forEach((barra, indice) => {
+                const valorAudio = dataArray[indice] || 0;
+                // Convertir la frecuencia física en escalado de pixeles (Altura)
+                const nuevaAltura = Math.max(10, Math.min(65, valorAudio * 0.4));
+                barra.style.height = `${nuevaAltura}px`;
+                barra.style.transform = 'scaleY(1)'; // Forzar actualización de hardware gráfico
+            });
+        };
+        
+        // Iniciar animación activa
+        refrescarOndas();
+        
+        const intervalo = setInterval(() => {
+            if (!analizador) { clearInterval(intervalo); return; }
+            analizador.getByteFrequencyData(dataArray);
+            for (let i = 0; i < bufferLength; i++) {
+                if (dataArray[i] > 0) { sumaFrecuencias += dataArray[i]; conteouestras++; }
             }
-            ctx.stroke();
-        }
+        }, 300);
 
-        // Agregar pequeños nodos/círculos brillantes en intersecciones aleatorias
-        ctx.fillStyle = 'rgba(0, 255, 204, 0.2)';
-        for (let i = 0; i < 15; i++) {
-            let nodoX = Math.round((Math.random() * canvas.width) / espaciado) * espaciado;
-            let nodoY = Math.round((Math.random() * canvas.height) / espaciado) * espaciado;
-            ctx.beginPath();
-            ctx.arc(nodoX, nodoY, 3, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    window.addEventListener('resize', ajustarCanvas);
-    ajustarCanvas();
+        // Apagado físico del canal y regreso a animación pasiva de espera
+        setTimeout(() => {
+            clearInterval(intervalo);
+            if (conteouestras > 0) { frecuenciaMediaDetectada = Math.round(sumaFrecuencias / conteouestras); }
+            stream.getTracks().forEach(track => track.stop());
+            if (audioContext) audioContext.close();
+            analizador = null;
+            
+            // Restaurar las ondas a su animación CSS pasiva del archivo style.css
+            barrasUI.forEach((barra) => {
+                barra.style.height = ''; 
+            });
+        }, 4000); // 4 segundos de escucha activa por comando
+    }).catch(() => {
+        textoEstado.innerText = "Error de hardware: Micrófono bloqueado.";
+    });
 }
-// ==========================================
-// AQUÍ CONTINÚA TU CÓDIGO PREVIO DE APP.JS...
-// ==========================================
