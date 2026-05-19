@@ -8,7 +8,7 @@
 
 body {
     background-color: #050811;
-    /* Fondo con sutil patrón de circuitos simulados mediante gradientes líneas */
+    /* Fondo con sutil patrón de circuitos simulados mediante gradientes */
     background-image: 
         linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px),
         linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px);
@@ -26,70 +26,75 @@ body {
     display: flex;
     flex-direction: row;
     width: 100%;
-    height: calc(100vh - 120px); /* Deja espacio abajo para los subtítulos */
+    height: calc(100vh - 120px); /* Espacio reservado para subtítulos */
     align-items: center;
     justify-content: space-between;
     padding: 20px;
 }
 
-/* BARRAS LATERALES SEMITRANSPARENTES */
+/* BOXLAYOUT VERTICAL: BARRAS LATERALES SEMITRANSPARENTES */
 .barra-lateral {
-    width: 90px;
-    height: 85%;
-    background: rgba(5, 15, 25, 0.6);
-    border: 2px solid rgba(0, 255, 204, 0.3);
-    border-radius: 20px;
-    box-shadow: 0 0 15px rgba(0, 255, 204, 0.1), inset 0 0 10px rgba(0, 255, 204, 0.1);
-    backdrop-filter: blur(10px);
+    width: 85px;
+    height: 90%;
+    background: rgba(5, 15, 25, 0.65);
+    border: 2px solid rgba(0, 255, 204, 0.25);
+    border-radius: 18px;
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.15), inset 0 0 15px rgba(0, 255, 204, 0.1);
+    backdrop-filter: blur(12px);
+    
+    /* Configuración estricta de BoxLayout Vertical */
     display: flex;
-    flex-direction: column;
+    flex-direction: column; 
     align-items: center;
-    justify-content: space-around;
-    padding: 15px 0;
+    justify-content: space-between; /* Distribuye los iconos de arriba a abajo equitativamente */
+    padding: 20px 0; /* Margen interno superior e inferior */
 }
 
 /* BOTONES/ICONOS INTERACTIVOS HOLOGRÁFICOS */
 .btn-holograma {
-    width: 55px;
-    height: 55px;
+    width: 58px;
+    height: 58px;
     background: transparent;
-    border: 1px solid rgba(0, 255, 204, 0.4);
+    border: 1px solid rgba(0, 255, 204, 0.35);
     border-radius: 12px;
     color: #00ffcc;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: bold;
     cursor: pointer;
+    
+    /* Centrado interno de contenido */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    gap: 4px;
+    
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     text-shadow: 0 0 5px #00ffcc;
-    box-shadow: 0 0 5px rgba(0, 255, 204, 0.1);
 }
 
+/* Efecto de iluminación cinematográfica al interactuar */
 .btn-holograma:hover, .btn-holograma:active {
-    background: rgba(0, 255, 204, 0.15);
+    background: rgba(0, 255, 204, 0.12);
     border-color: #00ffcc;
-    box-shadow: 0 0 15px #00ffcc;
-    transform: scale(1.05);
+    box-shadow: 0 0 18px rgba(0, 255, 204, 0.8);
+    transform: scale(1.06);
 }
 
-/* Punto rojo parpadeante para el botón LIVE */
+/* Indicador LIVE con parpadeo continuo */
 .live-dot {
     width: 6px;
     height: 6px;
     background-color: #ff0055;
     border-radius: 50%;
     display: inline-block;
-    margin-top: 3px;
     box-shadow: 0 0 8px #ff0055;
-    animation: parpadeo 1s infinite alternate;
+    animation: parpadeoLive 1s infinite alternate;
 }
 
-@keyframes parpadeo {
-    from { opacity: 0.3; }
-    to { opacity: 1; box-shadow: 0 0 12px #ff0055; }
+@keyframes parpadeoLive {
+    from { opacity: 0.3; transform: scale(0.9); }
+    to { opacity: 1; box-shadow: 0 0 14px #ff0055; transform: scale(1.1); }
 }
 
 /* PANEL CENTRAL (CARA ROBOT Y ONDAS) */
@@ -107,86 +112,24 @@ body {
     width: 180px;
     height: 180px;
     border: 4px solid #ffffff;
-    border-color: #00ffcc #ffffff #00ffcc #ffffff; /* Alternancia de luces azul/blanco */
+    border-color: #00ffcc #ffffff #00ffcc #ffffff;
     border-radius: 45% 45% 40% 40%;
-    box-shadow: 0 0 30px rgba(0, 255, 204, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 35px rgba(0, 255, 204, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 30px;
-    margin-bottom: 50px;
+    margin-bottom: 45px;
     cursor: pointer;
-    background: radial-gradient(circle, rgba(0,255,204,0.05) 0%, transparent 70%);
-    transition: all 0.4s ease;
+    background: radial-gradient(circle, rgba(0,255,204,0.06) 0%, transparent 75%);
+    transition: all 0.3s ease;
 }
 
 .cara-robot:active {
-    transform: scale(0.95);
+    transform: scale(0.94);
     border-color: #ff0055;
-    box-shadow: 0 0 35px #ff0055;
+    box-shadow: 0 0 40px #ff0055;
 }
 
-/* Ojos del Robot (Neutros pero amigables) */
 .ojo {
     width: 16px;
-    height: 28px;
-    background-color: #ffffff;
-    border-radius: 50%;
-    box-shadow: 0 0 15px #ffffff;
-}
-
-/* VISUALIZADOR DE ONDAS DE SONIDO NEÓN */
-.contenedor-ondas {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    height: 40px;
-    width: 240px;
-    padding: 10px;
-    border-radius: 10px;
-    background: rgba(0, 255, 204, 0.02);
-    border: 1px solid rgba(0, 255, 204, 0.1);
-}
-
-.barra-onda {
-    width: 3px;
-    height: 15px;
-    background-color: #00ffcc;
-    box-shadow: 0 0 8px #00ffcc;
-    border-radius: 2px;
-    animation: simularVoz 1.2s ease-in-out infinite alternate;
-}
-
-/* Animaciones desfasadas para que parezca una onda real */
-.barra-onda:nth-child(2n) { animation-duration: 0.7s; height: 25px; }
-.barra-onda:nth-child(3n) { animation-duration: 0.9s; height: 35px; }
-.barra-onda:nth-child(5n) { animation-duration: 0.5s; height: 10px; }
-
-@keyframes simularVoz {
-    0% { transform: scaleY(0.4); }
-    100% { transform: scaleY(1.4); }
-}
-
-/* SECCIÓN INFERIOR DE CHAT / SUBTÍTULOS */
-.panel-subtitulos {
-    width: 100%;
-    height: 120px;
-    background: linear-gradient(transparent, rgba(5, 8, 17, 0.95));
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 15px;
-    border-top: 1px solid rgba(0, 255, 204, 0.05);
-}
-
-.linea-subtitulo {
-    font-size: 1rem;
-    font-weight: 300;
-    color: #ffffff;
-    text-align: center;
-    margin-bottom: 6px;
-    letter-spacing: 0.5px;
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-}
