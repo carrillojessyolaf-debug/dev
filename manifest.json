@@ -1,7 +1,7 @@
 {
   "name": "Viernes Inteligencia Artificial",
   "short_name": "Viernes OS",
-  "description": "Interfaz holográfica de soporte táctil y multimodal para el Jefe Omar.",
+  "description": "Interfaz de soporte táctil y multimodal para el Jefe Omar.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#050c14",

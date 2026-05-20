@@ -7,7 +7,7 @@ const ASSETS = [
   './manifest.json'
 ];
 
-// Instalar el Service Worker y almacenar los archivos en el chasis local del cel
+// Instalar el Service Worker y almacenar los archivos de interfaz en la memoria del cel
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -16,7 +16,7 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// Activar y limpiar cachés antiguas
+// Activar el motor y realizar la limpieza de registros antiguos
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -29,7 +29,7 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Servir la app de inmediato para rendimiento instantáneo
+// Servir los recursos visuales directamente desde la memoria caché local
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((res) => {
