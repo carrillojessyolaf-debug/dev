@@ -30,10 +30,9 @@ if (canvas) {
 }
 
 // ==========================================
-// 2. ENLACE SEGURO AL PROCESAMIENTO EN LA NUBE (BACKEND)
+// 2. ENLACE SEGURO AL PROCESAMIENTO EN LA NUBE (URL CODESPACES REINYECTADA)
 // ==========================================
-// Aquí defines la URL de tu servidor intermedio para no exponer llaves privadas en el S20
-const BACKEND_ORQUESTADOR_URL = "http://localhost:3000/api/viernes/procesar"; 
+const BACKEND_ORQUESTADOR_URL = "https://urban-journey-5vqwxw9wj7q4375j4-3000.app.github.dev/api/viernes/procesar"; 
 
 // ==========================================
 // 3. COMPONENTES DE INTERFAZ Y LOGS DE SENSORES
@@ -56,7 +55,7 @@ if (inputArchivo) {
                 const base64Completo = event.target.result;
                 payloadMultimodal.mimeType = archivo.type;
                 payloadMultimodal.nombreArchivo = archivo.name;
-                payloadMultimodal.datosBase64 = base64Completo.split(',')[1]; // Extrae solo la cadena binaria pura
+                payloadMultimodal.datosBase64 = base64Completo.split(',')[1]; 
                 
                 if (vistaPreviaImg) {
                     vistaPreviaImg.src = base64Completo; vistaPreviaImg.style.display = "block";
@@ -136,7 +135,6 @@ document.addEventListener("DOMContentLoaded", () => {
 async function despacharComandoAlServidor(mensajeUsuario) {
     actualizarSubtitulos("VIERNES OS", "Enrutando comando al servidor seguro...");
     
-    // Empaquetar la solicitud unificada (Texto + Imagen si existe)
     const datosEnvio = {
         comando: mensajeUsuario,
         multimodal: payloadMultimodal.datosBase64 ? {
@@ -145,14 +143,12 @@ async function despacharComandoAlServidor(mensajeUsuario) {
         } : null
     };
 
-    // Resetear inmediatamente el buffer gráfico de la interfaz
     if (payloadMultimodal.datosBase64) {
         payloadMultimodal = { mimeType: null, datosBase64: null, nombreArchivo: null };
         if (vistaPreviaImg) vistaPreviaImg.style.display = "none";
     }
 
     try {
-        // Petición hacia el backend intermedio que resguarda las API Keys
         const respuesta = await fetch(BACKEND_ORQUESTADOR_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -161,7 +157,6 @@ async function despacharComandoAlServidor(mensajeUsuario) {
 
         const datosRetorno = await respuesta.json();
 
-        // El Backend procesa con la IA y devuelve si se requiere ejecutar una función o hablar
         if (datosRetorno.ejecutarFuncion) {
             ejecutarHerramientaEspecialista(datosRetorno.funcionNombre, datosRetorno.funcionArgumentos);
         } else if (datosRetorno.respuestaVoz) {
@@ -203,36 +198,46 @@ function ejecutarHerramientaEspecialista(nombre, argumentos) {
 }
 
 // ==========================================
-// 7. ESCUCHA ACTIVA AUTÓNOMA CONTINUA (WAKE WORD)
+// 7. SISTEMA DE ESCUCHA BAJO DEMANDA (OPTIMIZADO PARA S20)
 // ==========================================
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let reconocimiento = null;
+let escuchandoActivo = false;
 
 if (SpeechRecognition) {
     reconocimiento = new SpeechRecognition();
     reconocimiento.lang = 'es-MX';
-    reconocimiento.continuous = true;
+    reconocimiento.continuous = false; 
     reconocimiento.interimResults = false;
 
-    window.addEventListener('load', () => { try { reconocimiento.start(); } catch(e) {} });
+    const avatarRobot = document.getElementById('boton-activar');
+    if (avatarRobot) {
+        avatarRobot.addEventListener('click', () => {
+            if (!escuchandoActivo) {
+                desactivarRelojOndasPasivas();
+                activarAnalisisBiometrico();
+                actualizarSubtitulos("SISTEMA", "Abriendo canal de audio... Hable ahora, Jefe.");
+                
+                try {
+                    reconocimiento.start();
+                    escuchandoActivo = true;
+                } catch(e) {
+                    console.log("El sensor de audio ya se encuentra activo.");
+                }
+            }
+        });
+    }
 
     reconocimiento.onresult = (event) => {
-        const indiceUltimoResult = event.results.length - 1;
-        const loQueDije = event.results[indiceUltimoResult][0].transcript.toLowerCase().trim();
-        
-        // El analizador local detecta si el usuario invoca la IA antes de enviarla a la red
-        const nombresActivacion = ["viernes", "lu", "il"];
-        if (nombresActivacion.some(nombre => loQueDije.includes(nombre))) {
-            actualizarSubtitulos("USUARIO", `"${loQueDije}"`);
-            desactivarRelojOndasPasivas();
-            activarAnalisisBiometrico();
-            
-            // Enrutar la petición de forma segura al Servidor Intermedio
-            despacharComandoAlServidor(loQueDije);
-        }
+        const loQueDije = event.results[0][0].transcript.toLowerCase().trim();
+        actualizarSubtitulos("USUARIO", `"${loQueDije}"`);
+        despacharComandoAlServidor(loQueDije);
     };
     
-    reconocimiento.onend = () => { try { reconocimiento.start(); } catch(e) {} };
+    reconocimiento.onend = () => {
+        escuchandoActivo = false;
+        activarRelojOndasPasivas();
+    };
 }
 
 function activarAnalisisBiometrico() {
@@ -272,7 +277,6 @@ function actualizarSubtitulos(emisor, texto) {
     }
 }
 
-// Inyección de texto directa a los subtítulos estilo JARVIS al hablar
 function responderConVoz(texto) {
     const lectura = new SpeechSynthesisUtterance(texto);
     lectura.lang = 'es-MX'; lectura.rate = 1.0;
