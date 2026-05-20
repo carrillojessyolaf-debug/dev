@@ -1,1 +1,110 @@
-<link rel="manifest" href="manifest.json">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Viernes OS - Interfaz Avanzada</title>
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <meta name="theme-color" content="#00ffcc">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <canvas id="canvas-circuitos"></canvas>
+
+    <div class="contenedor-holograma">
+        
+        <div class="columna-lateral">
+            <button class="btn-holograma" title="Documento">
+                <span class="icono">📄</span>
+                <span class="etiqueta">DOC</span>
+            </button>
+            
+            <button class="btn-holograma" title="Cámara" onclick="document.getElementById('input-archivo').click()">
+                <span class="icono">📸</span>
+                <span class="etiqueta">CAM</span>
+            </button>
+            
+            <input type="file" id="input-archivo" accept="image/*" style="display: none;">
+            
+            <button class="btn-holograma" title="Galería">
+                <span class="icono">🗂️</span>
+                <span class="etiqueta">GAL</span>
+            </button>
+        </div>
+
+        <div class="nucleo-central">
+            
+            <div class="avatar-contenedor" id="boton-activar">
+                <div class="ojo izquierdo"></div>
+                <div class="ojo derecho"></div>
+            </div>
+
+            <div class="contenedor-ondas" id="ondas-audio">
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+                <div class="barra-onda"></div>
+            </div>
+
+            <div class="contenedor-preview">
+                <img id="vista-previa-img" src="" alt="Preview Multimodal" style="display: none;">
+            </div>
+        </div>
+
+        <div class="columna-lateral">
+            <button class="btn-holograma" title="Mood Relajado">
+                <span class="icono">😌</span>
+                <span class="etiqueta">MOOD</span>
+            </button>
+            <button class="btn-holograma" title="Mood Inteligente">
+                <span class="icono">🧠</span>
+                <span class="etiqueta">INT</span>
+            </button>
+            <button class="btn-holograma" title="Video">
+                <span class="icono">📹</span>
+                <span class="etiqueta">VID</span>
+            </button>
+            <button class="btn-holograma" title="Teléfono">
+                <span class="icono">📞</span>
+                <span class="etiqueta">TEL</span>
+            </button>
+            <button class="btn-holograma" title="Transmisión en Vivo">
+                <span class="icono">🔴</span>
+                <span class="etiqueta">LIVE</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="panel-subtitulos">
+        <p id="subtitulo-1" class="linea-vieja">[VIERNES OS]: Inicializando sistemas...</p>
+        <p id="subtitulo-2" class="linea-nueva">[VIERNES OS]: Enlace biométrico estable. En espera, Jefe Omar.</p>
+    </div>
+
+    <script src="app.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registro => {
+                        console.log('📡 [PWA]: Motor de empaquetado local activo de forma conforme.', registro.scope);
+                    })
+                    .catch(error => {
+                        console.error('❌ [PWA]: Fallo en la inicialización del contenedor local:', error);
+                    });
+            });
+        }
+    </script>
+
+</body>
+</html>
